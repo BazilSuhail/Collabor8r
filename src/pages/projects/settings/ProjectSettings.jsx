@@ -1,45 +1,43 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { FiSave, FiSettings } from 'react-icons/fi'
+import { FiSave, FiSettings, FiTrash2 } from 'react-icons/fi'
 import PageHeader from '../../../components/PageHeader'
-import useProjectStore from '../../../stores/projectStore'
+import api from '../../../utils/api'
 
 const ProjectSettings = () => {
   const { projectId } = useParams()
-  const { currentProject, fetchProjectDetail, updateProject } = useProjectStore()
   const [form, setForm] = useState({ name: '', description: '', theme: '#ea580c' })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [notifCount, setNotifCount] = useState(0)
 
   useEffect(() => {
-    fetchProjectDetail(projectId).finally(() => setLoading(false))
-  }, [projectId])
-
-  useEffect(() => {
-    if (currentProject) {
-      setForm({
-        name: currentProject.name || '',
-        description: currentProject.description || '',
-        theme: currentProject.theme || '#ea580c',
-      })
+    const load = async () => {
+      const [projectRes] = await Promise.allSettled([
+        api('GET', '/admin-projects/' + projectId),
+        api('GET', '/profile/notifications/unread-count'),
+      ])
+      if (projectRes.status === 'fulfilled') {
+        const p = projectRes.value.data?.project || projectRes.value.data
+        if (p) setForm({ name: p.name || '', description: p.description || '', theme: p.theme || '#ea580c' })
+      }
+      setLoading(false)
     }
-  }, [currentProject])
+    load()
+  }, [projectId])
 
   const handleSave = async (e) => {
     e.preventDefault()
     setSaving(true)
     setSaved(false)
-    try {
-      await updateProject(projectId, form)
+    const { error } = await api('PUT', `/projects/${projectId}/update`, form)
+    if (!error) {
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
-    } catch (err) {
-      console.error('Update failed:', err)
-    } finally {
-      setSaving(false)
     }
+    setSaving(false)
   }
 
   if (loading) {

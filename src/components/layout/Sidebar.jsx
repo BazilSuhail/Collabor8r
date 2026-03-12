@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { NavLink, Link, useNavigate } from 'react-router-dom'
+import { useState, useEffect, useMemo } from 'react'
+import { NavLink, Link, useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { RiLogoutBoxRLine } from 'react-icons/ri'
 import { RxDashboard } from 'react-icons/rx'
@@ -8,9 +8,12 @@ import { BsGraphUp } from 'react-icons/bs'
 import { FaCubes } from 'react-icons/fa'
 import { GoPeople } from 'react-icons/go'
 import { LuCopyMinus } from 'react-icons/lu'
+import { FiCpu } from 'react-icons/fi'
 import useUiStore from '../../stores/uiStore'
 import useAuthStore from '../../stores/authStore'
 import useProjectStore from '../../stores/projectStore'
+import useNotificationStore from '../../stores/notificationStore'
+import NotificationPanel from '../notifications/NotificationPanel'
 
 const colors = [
   'bg-red-400', 'bg-blue-400', 'bg-green-700', 'bg-yellow-600',
@@ -19,26 +22,39 @@ const colors = [
 
 const getRandomColor = () => colors[Math.floor(Math.random() * colors.length)]
 
-const MobileNavLink = ({ to, icon, label, delay, onClick }) => (
-  <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay }}>
-    <NavLink
-      to={to}
-      onClick={onClick}
-      className={({ isActive }) =>
-        `flex items-center p-2.5 rounded-lg transition-all duration-200 ${
-          isActive
+const projectNavs = ['/projects', '/projects/joined', '/projects/managing']
+
+const isNavMatch = (to, pathname) => {
+  if (to === '/projects') return pathname === '/projects' || /^\/projects\/[a-f0-9]+$/.test(pathname)
+  if (to === '/projects/joined') return pathname === '/projects/joined' || pathname.endsWith('/joined')
+  if (to === '/projects/managing') return pathname === '/projects/managing' || pathname.endsWith('/manage')
+  return pathname === to
+}
+
+const MobileNavLink = ({ to, icon, label, delay, onClick }) => {
+  const location = useLocation()
+  const active = isNavMatch(to, location.pathname)
+  const end = projectNavs.includes(to)
+  return (
+    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay }}>
+      <NavLink
+        to={to}
+        end={end}
+        onClick={onClick}
+        className={`flex items-center p-2.5 rounded-lg transition-all duration-200 ${
+          active
             ? 'bg-orange-600/10 text-orange-600'
             : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-white'
-        }`
-      }
-    >
-      <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
-        {icon}
-      </motion.div>
-      <span className="ml-3 font-medium text-sm">{label}</span>
-    </NavLink>
-  </motion.div>
-)
+        }`}
+      >
+        <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+          {icon}
+        </motion.div>
+        <span className="ml-3 font-medium text-sm">{label}</span>
+      </NavLink>
+    </motion.div>
+  )
+}
 
 const sidebarNavItems = [
   { to: '/dashboard', label: 'Dashboard', icon: <RxDashboard size={20} /> },
@@ -49,18 +65,24 @@ const sidebarNavItems = [
   { to: '/projects/managing', label: 'Managed Projects', icon: <GoPeople size={20} /> },
   { to: '/organizations', label: 'Organizations', icon: <GoPeople size={20} /> },
   { to: '/invitations', label: 'Invitations', icon: <LuCopyMinus size={20} /> },
+  { to: '/ai', label: 'AI Command', icon: <FiCpu size={20} /> },
 ]
 
 const Sidebar = () => {
   const navigate = useNavigate()
   const { user, logout } = useAuthStore()
-  const { fetchJoinedProjects, joinedProjects } = useProjectStore()
+  const { fetchJoinedProjects, joinedProjects: rawJoined } = useProjectStore()
+  const joinedProjects = useMemo(() => rawJoined.filter((p, i, arr) => arr.findIndex((x) => x._id === p._id) === i), [rawJoined])
   const { sidebarOpen, toggleSidebar, theme, toggleTheme } = useUiStore()
   const [projectColors, setProjectColors] = useState({})
+  const location = useLocation()
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
+  const { unreadCount, togglePanel: toggleNotificationPanel, fetchNotifications, listenSocket } = useNotificationStore()
 
   useEffect(() => {
     fetchJoinedProjects()
+    fetchNotifications()
+    listenSocket()
   }, [])
 
   useEffect(() => {
@@ -81,7 +103,7 @@ const Sidebar = () => {
   }
 
   const sidebarVariants = {
-    expanded: { width: 280 },
+    expanded: { width: 260 },
     collapsed: { width: 80 },
   }
 
@@ -108,6 +130,7 @@ const Sidebar = () => {
 
         <div className="flex items-center gap-3">
           <motion.button
+            onClick={toggleNotificationPanel}
             className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors relative"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
@@ -116,6 +139,11 @@ const Sidebar = () => {
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
               <path d="M13.73 21a2 2 0 0 1-3.46 0" />
             </svg>
+            {unreadCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-lg">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
           </motion.button>
 
           <motion.button
@@ -340,10 +368,15 @@ const Sidebar = () => {
             </button>
 
             <div className="flex items-center gap-1">
-              <button className="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors">
+              <button onClick={toggleNotificationPanel} className="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors relative">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" />
                 </svg>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-lg">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
               </button>
               <button className="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -386,22 +419,25 @@ const Sidebar = () => {
 
           {/* Navigation Items */}
           <div className="flex-1 overflow-y-auto pr-1 -mr-1 no-scrollbar space-y-1">
-            {sidebarNavItems.map(({ to, label, icon }) => (
-              <NavLink
-                key={to}
-                to={to}
-                className={({ isActive }) =>
-                  `flex items-center p-2.5 rounded-lg transition-all duration-200 group ${
-                    isActive
+            {sidebarNavItems.map(({ to, label, icon }) => {
+              const end = projectNavs.includes(to)
+              const active = isNavMatch(to, location.pathname)
+              return (
+                <NavLink
+                  key={to}
+                  to={to}
+                  end={end}
+                  className={`flex items-center p-2.5 rounded-lg transition-all duration-200 group ${
+                    active
                       ? 'bg-orange-600/10 text-orange-600'
                       : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-white'
-                  } ${!sidebarOpen && 'justify-center'}`
-                }
-              >
-                <span className="min-w-[20px]">{icon}</span>
-                {sidebarOpen && <p className="ml-3 font-[500] text-[15px]">{label}</p>}
-              </NavLink>
-            ))}
+                  } ${!sidebarOpen && 'justify-center'}`}
+                >
+                  <span className="min-w-[20px]">{icon}</span>
+                  {sidebarOpen && <p className="ml-3 font-[500] text-[15px]">{label}</p>}
+                </NavLink>
+              )
+            })}
 
             {/* Flat Project List */}
             {sidebarOpen && joinedProjects.length > 0 && (
@@ -433,20 +469,21 @@ const Sidebar = () => {
 
           {/* Footer */}
           <div className="mt-auto pt-4 space-y-1">
-            <div className={`border-t border-gray-100 dark:border-gray-800/50 mt-4 ${!sidebarOpen && 'justify-center'}`}>
+            <div className={` bg-red-100 dark:bg-red-950/50  rounded-lg dark:border-gray-800/50 mt-4 ${!sidebarOpen && 'justify-center'}`}>
               <button
                 onClick={handleLogout}
                 className={`flex items-center w-full p-2.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-all ${
                   !sidebarOpen && 'justify-center'
                 }`}
               >
-                <RiLogoutBoxRLine size={20} className="min-w-[20px]" />
-                {sidebarOpen && <span className="ml-3 font-bold text-[15px]">Sign Out</span>}
+                <RiLogoutBoxRLine size={18} className="min-w-4" />
+                {sidebarOpen && <span className="ml-3 font-semibold text-[14px]">Logout</span>}
               </button>
             </div>
           </div>
         </div>
       </motion.div>
+      <NotificationPanel />
     </nav>
   )
 }

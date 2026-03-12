@@ -2,10 +2,11 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { FaUserFriends } from 'react-icons/fa'
 import { GrStatusInfo } from 'react-icons/gr'
 import { IoCheckmarkDoneCircleOutline } from 'react-icons/io5'
-import { MdLowPriority, MdOutlineDescription, MdOutlineSubtitles, MdEvent } from 'react-icons/md'
+import { MdLowPriority, MdOutlineDescription, MdOutlineSubtitles, MdEvent, MdOutlineTimelapse, MdLink } from 'react-icons/md'
 import { RxCross2 } from 'react-icons/rx'
+import { FiTag } from 'react-icons/fi'
 
-const TaskModal = ({ isOpen, onClose, onSubmit, newTask, users, handleChange, editingTaskId }) => {
+const TaskModal = ({ isOpen, onClose, onSubmit, newTask, users, handleChange, handleCheckboxChange, editingTaskId, sprints, labels, allTasks, currentUser, isCreatorOrManager }) => {
   return (
     <AnimatePresence>
       {isOpen && (
@@ -31,6 +32,7 @@ const TaskModal = ({ isOpen, onClose, onSubmit, newTask, users, handleChange, ed
                   <select name="status" value={newTask.status} onChange={handleChange} className="w-full px-5 py-3 bg-gray-50 dark:bg-[#151515] dark:text-white border border-transparent hover:border-orange-500/30 rounded-xl outline-none transition-all appearance-none cursor-pointer">
                     <option value="Not Started">Not Started</option>
                     <option value="In Progress">In Progress</option>
+                    <option value="Paused">Paused</option>
                     <option value="Completed">Completed</option>
                   </select>
                 </div>
@@ -47,22 +49,72 @@ const TaskModal = ({ isOpen, onClose, onSubmit, newTask, users, handleChange, ed
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500"><MdEvent className="text-orange-500" /> Deadline</label>
-                  <input type="date" name="dueDate" value={newTask.dueDate} required onChange={handleChange} className="w-full px-5 py-3 bg-gray-50 dark:bg-[#151515] dark:text-white border border-transparent focus:border-orange-500/50 rounded-xl outline-none transition-all appearance-none" />
+                  <input type="date" name="dueDate" value={newTask.dueDate} onChange={handleChange} className="w-full px-5 py-3 bg-gray-50 dark:bg-[#151515] dark:text-white border border-transparent focus:border-orange-500/50 rounded-xl outline-none transition-all appearance-none" />
                 </div>
                 <div className="space-y-2">
+                  <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500"><MdOutlineTimelapse className="text-orange-500" /> Est. Hours</label>
+                  <input type="number" name="estimateHours" value={newTask.estimateHours} onChange={handleChange} placeholder="0" min="0" step="0.5" className="w-full px-5 py-3 bg-gray-50 dark:bg-[#151515] dark:text-white border border-transparent focus:border-orange-500/50 rounded-xl outline-none transition-all" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
                   <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500"><FaUserFriends className="text-orange-500" /> Assign To</label>
-                  <select name="assignedTo" value={newTask.assignedTo} onChange={handleChange} className="w-full px-5 py-3 bg-gray-50 dark:bg-[#151515] dark:text-white border border-transparent hover:border-orange-500/30 rounded-xl outline-none transition-all appearance-none cursor-pointer" required>
+                  <select name="assignedTo" value={newTask.assignedTo} onChange={handleChange} className="w-full px-5 py-3 bg-gray-50 dark:bg-[#151515] dark:text-white border border-transparent hover:border-orange-500/30 rounded-xl outline-none transition-all appearance-none cursor-pointer">
                     <option value="">Select Contributor</option>
                     {users.map((user) => (
                       <option key={user._id} value={user._id}>{user.name} ({user.email})</option>
                     ))}
                   </select>
+                  {!isCreatorOrManager && (
+                    <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-1 font-medium">You can only assign tasks to yourself</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500"><MdLink className="text-orange-500" /> Parent Task</label>
+                  <select name="parentId" value={newTask.parentId} onChange={handleChange} className="w-full px-5 py-3 bg-gray-50 dark:bg-[#151515] dark:text-white border border-transparent hover:border-orange-500/30 rounded-xl outline-none transition-all appearance-none cursor-pointer">
+                    <option value="">No Parent</option>
+                    {(allTasks || []).map((t) => (
+                      <option key={t._id} value={t._id}>{t.title?.length > 35 ? t.title.slice(0, 35) + '...' : t.title}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500"><MdEvent className="text-orange-500" /> Sprint</label>
+                  <select name="sprintId" value={newTask.sprintId} onChange={handleChange} className="w-full px-5 py-3 bg-gray-50 dark:bg-[#151515] dark:text-white border border-transparent hover:border-orange-500/30 rounded-xl outline-none transition-all appearance-none cursor-pointer">
+                    <option value="">No Sprint</option>
+                    {(sprints || []).map((s) => (
+                      <option key={s._id} value={s._id}>{s.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500"><FiTag className="text-orange-500" /> Labels</label>
+                  <div className="flex flex-wrap gap-1.5 p-2 bg-gray-50 dark:bg-[#151515] rounded-xl min-h-[42px] border border-transparent">
+                    {(labels || []).length === 0 && (
+                      <span className="text-xs text-gray-400 px-2">No labels available</span>
+                    )}
+                    {(labels || []).map((l) => {
+                      const checked = (newTask.labels || []).includes(l._id)
+                      return (
+                        <label key={l._id} className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold cursor-pointer transition-all ${checked ? 'text-white' : 'text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-[#1a1a1a]'}`}
+                          style={checked ? { backgroundColor: l.color || '#ea580c' } : {}}
+                        >
+                          <input type="checkbox" checked={checked} onChange={() => handleCheckboxChange('labels', l._id)} className="hidden" />
+                          {l.name}
+                        </label>
+                      )
+                    })}
+                  </div>
                 </div>
               </div>
 
               <div className="space-y-2">
                 <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500"><MdOutlineDescription className="text-orange-500" /> Task Guidelines</label>
-                <textarea name="description" value={newTask.description} onChange={handleChange} placeholder="Specific requirements and success criteria..." className="w-full px-5 py-3 bg-gray-50 dark:bg-[#151515] dark:text-white border border-transparent focus:border-orange-500/50 rounded-xl outline-none transition-all h-28 resize-none" required />
+                <textarea name="description" value={newTask.description} onChange={handleChange} placeholder="Specific requirements and success criteria..." className="w-full px-5 py-3 bg-gray-50 dark:bg-[#151515] dark:text-white border border-transparent focus:border-orange-500/50 rounded-xl outline-none transition-all h-28 resize-none" />
               </div>
 
               <button type="submit" className="w-full bg-orange-600 hover:bg-orange-700 py-4 rounded-xl text-white font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-orange-600/20 active:scale-[0.98]">

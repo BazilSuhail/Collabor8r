@@ -24,7 +24,7 @@ const SidebarLayout = () => {
       <Sidebar />
       <main
         className={`flex-1 transition-all duration-[350ms] ease-[cubic-bezier(0.4,0,0.2,1)] pt-16 lg:pt-0 ${
-          sidebarOpen ? 'ml-[280px]' : 'ml-[80px]'
+          sidebarOpen ? 'ml-[260px]' : 'ml-[80px]'
         }`}
       >
         <div className="p-6">

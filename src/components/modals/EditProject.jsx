@@ -27,15 +27,14 @@ const EditProject = ({ setShowModal, project, heading = 'Modify Project Paramete
   const handleEditProject = async (e) => {
     e.preventDefault()
     setIsSubmitting(true)
-    try {
-      await api('PUT', '/projects/' + project._id + '/update', { name, description, projectManagerEmail, theme })
+    const { error } = await api('PUT', '/projects/' + project._id + '/update', { name, description, projectManagerEmail, theme })
+    if (error) {
+      setError('Failed to update project configuration.')
+    } else {
       setSuccess('Project parameters updated successfully!')
       setTimeout(() => setShowModal(false), 1500)
-    } catch {
-      setError('Failed to update project configuration.')
-    } finally {
-      setIsSubmitting(false)
     }
+    setIsSubmitting(false)
   }
 
   return (
@@ -81,11 +80,11 @@ const EditProject = ({ setShowModal, project, heading = 'Modify Project Paramete
       </motion.div>
 
       {showThemeModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1000] flex items-center justify-center p-6">
-          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className='bg-white dark:bg-[#0a0a0a] border border-gray-100 dark:border-[#1a1a1a] w-full max-w-4xl p-8 rounded-3xl flex flex-col relative max-h-[90vh]'>
+        <div className="fixed inset-0 bg-black/10 z-[1000] flex items-center justify-center p-6">
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className='bg-white dark:bg-[#0a0a0a] border border-gray-100 dark:border-[#1a1a1a] w-full max-w-[80%] p-8 rounded-3xl flex flex-col relative max-h-[90vh]'>
             <button onClick={() => setShowThemeModal(false)} className="absolute top-6 right-6 p-2 text-gray-400 hover:text-orange-500 transition-colors"><RxCross2 className="text-2xl" /></button>
-            <h4 className="text-xl font-bold dark:text-white mb-6">Redefine Environment Visuals</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-y-auto pr-2 no-scrollbar">
+            <h4 className="text-xl font-bold dark:text-white mb-6">Select Project Coverr</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto pr-2 no-scrollbar">
               {Array.from({ length: 6 }).map((_, index) => (
                 <div key={index} className={`relative group cursor-pointer overflow-hidden rounded-2xl border-4 transition-all ${theme === index + 1 ? 'border-orange-600' : 'border-transparent'}`} onClick={() => { setTheme(index + 1); setShowThemeModal(false) }}>
                   <img src={`/themes/${index + 1}.jpg`} alt={`Theme ${index + 1}`} className="w-full h-40 object-cover group-hover:scale-110 transition-transform duration-700" />

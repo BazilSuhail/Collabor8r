@@ -1,33 +1,61 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { FiColumns, FiCalendar, FiUsers, FiSettings, FiClock, FiActivity, FiTag, FiPlus } from 'react-icons/fi'
+import { FiColumns, FiCalendar, FiUsers, FiSettings, FiClock, FiActivity, FiTag, FiPlus, FiLink, FiFilter, FiZap } from 'react-icons/fi'
+import { GoLink } from 'react-icons/go'
 import PageHeader from '../../components/PageHeader'
 import useProjectStore from '../../stores/projectStore'
+import useAuthStore from '../../stores/authStore'
 import api from '../../utils/api'
-
-const subLinks = (projectId) => [
-  { to: `/projects/${projectId}/board`, label: 'Board', icon: FiColumns, desc: 'Kanban view' },
-  { to: `/projects/${projectId}/backlog`, label: 'Backlog', icon: FiCalendar, desc: 'Sprint planning' },
-  { to: `/projects/${projectId}/team`, label: 'Team', icon: FiUsers, desc: 'Personnel' },
-  { to: `/projects/${projectId}/sprints`, label: 'Sprints', icon: FiCalendar, desc: 'Iterations' },
-  { to: `/projects/${projectId}/time`, label: 'Time', icon: FiClock, desc: 'Tracking' },
-  { to: `/projects/${projectId}/activity`, label: 'Activity', icon: FiActivity, desc: 'Log' },
-  { to: `/projects/${projectId}/labels`, label: 'Labels', icon: FiTag, desc: 'Tags' },
-  { to: `/projects/${projectId}/settings`, label: 'Settings', icon: FiSettings, desc: 'Config' },
-]
 
 const ProjectDetail = () => {
   const { projectId } = useParams()
+  const { user } = useAuthStore()
   const { currentProject, fetchProjectDetail } = useProjectStore()
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
+  const [role, setRole] = useState('member')
+
+  const isCreatorOrManager = role === 'creator' || role === 'manager'
+
+  const subLinks = (projectId) => {
+    const links = [
+      { to: `/projects/${projectId}/board`, label: 'Board', icon: FiColumns, desc: 'Kanban view' },
+      { to: `/projects/${projectId}/backlog`, label: 'Backlog', icon: FiCalendar, desc: 'Sprint planning' },
+      { to: `/projects/${projectId}/sprints`, label: 'Sprints', icon: FiCalendar, desc: 'Iterations' },
+      { to: `/projects/${projectId}/time`, label: 'Time', icon: FiClock, desc: 'Tracking' },
+      { to: `/projects/${projectId}/activity`, label: 'Activity', icon: FiActivity, desc: 'Log' },
+      { to: `/projects/${projectId}/filters`, label: 'Filters', icon: FiFilter, desc: 'Saved' },
+      { to: `/projects/${projectId}/dependencies`, label: 'Dependencies', icon: GoLink, desc: 'Task links' },
+      { to: `/projects/${projectId}/ai`, label: 'AI', icon: FiColumns, desc: 'Neural ops' },
+    ]
+    if (isCreatorOrManager) {
+      links.push(
+        { to: `/projects/${projectId}/team`, label: 'Team', icon: FiUsers, desc: 'Personnel' },
+        { to: `/projects/${projectId}/labels`, label: 'Labels', icon: FiTag, desc: 'Tags' },
+        { to: `/projects/${projectId}/board/config`, label: 'Board Config', icon: FiColumns, desc: 'Columns' },
+        { to: `/projects/${projectId}/webhooks`, label: 'Webhooks', icon: FiZap, desc: 'Integrations' },
+        { to: `/projects/${projectId}/settings`, label: 'Settings', icon: FiSettings, desc: 'Config' },
+      )
+    }
+    return links
+  }
 
   useEffect(() => {
-    Promise.all([
-      fetchProjectDetail(projectId),
-      api('GET', '/manageTasks/project/' + projectId).then(res => setTasks(res.data.tasks || res.data || []))
-    ]).finally(() => setLoading(false))
+    const load = async () => {
+      await fetchProjectDetail(projectId)
+      const tasksRes = await api('GET', '/manageTasks/project/' + projectId)
+      setTasks(tasksRes.data.validTasks || tasksRes.data.tasks || tasksRes.data || [])
+
+      const { data } = await api('GET', '/admin-projects/' + projectId)
+      if (!data.error) setRole('creator')
+      else {
+        const { data: mgrData } = await api('GET', '/joinedprojects/' + projectId)
+        if (mgrData?.project?.manager === user?._id) setRole('manager')
+      }
+      setLoading(false)
+    }
+    load()
   }, [projectId])
 
   if (loading) {
@@ -56,8 +84,8 @@ const ProjectDetail = () => {
         title={currentProject.name}
         subtitle={currentProject.description || 'No mission brief'}
         action={
-          <Link to={`/projects/${projectId}/backlog`} className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-br from-orange-600 to-orange-700 text-white font-bold shadow-md hover:from-orange-500 hover:to-orange-600 transition-all">
-            <FiPlus size={18} /> New Task
+          <Link to={`/projects/${projectId}/manage`} className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-br from-orange-600 to-orange-700 text-white font-bold shadow-md hover:from-orange-500 hover:to-orange-600 transition-all">
+            <FiPlus size={18} /> Manage Tasks
           </Link>
         }
       />
@@ -99,6 +127,11 @@ const ProjectDetail = () => {
                       task.priority === 'Medium' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
                       'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                     }`}>{task.priority}</span>
+                    {(task.labels || []).slice(0, 2).map((l, li) => (
+                      <span key={li} className="text-[8px] px-1.5 py-0.5 rounded font-bold"
+                        style={{ backgroundColor: (l.color || '#ea580c') + '20', color: l.color || '#ea580c' }}
+                      >{l.name || l}</span>
+                    ))}
                     {task.dueDate && <span className="text-xs text-gray-500 dark:text-gray-400">{new Date(task.dueDate).toLocaleDateString()}</span>}
                   </div>
                 </Link>

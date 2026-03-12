@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { FaPeopleRoof, FaEye } from 'react-icons/fa6'
 import { GrTask } from 'react-icons/gr'
@@ -7,6 +7,18 @@ import { MdOutlineManageAccounts } from 'react-icons/md'
 import { motion } from 'framer-motion'
 import useProjectStore from '../../stores/projectStore'
 import api from '../../utils/api'
+
+const SkeletonCard = () => (
+  <div className="bg-white dark:bg-[#121212] border border-gray-100 dark:border-[#1a1a1a] rounded-2xl overflow-hidden h-[320px] animate-pulse">
+    <div className="h-32 bg-gray-200 dark:bg-gray-800" />
+    <div className="px-6 py-6 space-y-3">
+      <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-3/4" />
+      <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-1/2" />
+      <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-2/3" />
+      <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-1/3" />
+    </div>
+  </div>
+)
 
 const TasksTimeline = ({ projectId }) => {
   const [tasks, setTasks] = useState([])
@@ -45,11 +57,13 @@ const TasksTimeline = ({ projectId }) => {
 
 const JoinedProjectList = () => {
   const navigate = useNavigate()
-  const { joinedProjects, fetchJoinedProjects } = useProjectStore()
+  const { joinedProjects: rawJoined, fetchJoinedProjects } = useProjectStore()
+  const joinedProjects = useMemo(() => rawJoined.filter((p, i, arr) => arr.findIndex((x) => x._id === p._id) === i), [rawJoined])
   const [selectedProjectId, setSelectedProjectId] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchJoinedProjects()
+    fetchJoinedProjects().finally(() => setLoading(false))
   }, [])
 
   const handleProjectClick = (projectId) => {
@@ -77,11 +91,15 @@ const JoinedProjectList = () => {
 
         <div className='h-[1px] bg-gray-200 dark:bg-[#1a1a1a] w-full mb-8'></div>
 
-        {joinedProjects.length === 0 ? (
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
+          </div>
+        ) : joinedProjects.length === 0 ? (
           <div className='flex flex-col items-center justify-center py-20 bg-white dark:bg-[#0a0a0a] rounded-3xl border border-dashed border-gray-200 dark:border-[#1a1a1a] shadow-sm'>
             <div className="relative mb-8">
               <div className="absolute inset-0 bg-orange-500/10 blur-3xl rounded-full" />
-              <img src="/Resources/5.png" alt='No projects' className='w-64 grayscale opacity-40 dark:invert brightness-0' />
+              <img src="/themes/5.jpg" alt='No projects' className='w-64 grayscale opacity-40 dark:invert brightness-0' />
             </div>
             <p className="text-lg font-bold text-gray-800 dark:text-white mb-2">Sector Void Detected</p>
             <p className="text-gray-500 dark:text-gray-400">You haven't been assigned to any collaborative projects yet.</p>
@@ -91,7 +109,7 @@ const JoinedProjectList = () => {
             {joinedProjects.map((project) => (
               <motion.div key={project._id} whileHover={{ y: -5 }} className="group bg-white dark:bg-[#121212] border border-gray-100 dark:border-[#1a1a1a] rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 flex flex-col h-[320px]">
                 <div className="relative h-32 overflow-hidden">
-                  <img src={`/themes/${project.theme || 1}.jpg`} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
+                  <img src={`/themes/1.jpg`} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                   <div className="absolute bottom-10 left-6 right-6 flex items-end justify-between">
                     <div className="min-w-0" onClick={() => handleNavigate(project._id)}>

@@ -1,12 +1,25 @@
 import { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import { FaLandMineOn, FaPeopleGroup } from 'react-icons/fa6'
 import { FaBorderAll, FaEye } from 'react-icons/fa'
+import { FiColumns, FiCalendar, FiClock, FiActivity, FiFilter, FiZap } from 'react-icons/fi'
+import { GoLink } from 'react-icons/go'
 import { motion } from 'framer-motion'
 import useProjectStore from '../../stores/projectStore'
 import useAuthStore from '../../stores/authStore'
 import api from '../../utils/api'
 import TeamMembers from '../../components/modals/TeamMembers'
+
+const subLinks = (projectId) => [
+  { to: `/projects/${projectId}/board`, label: 'Board', icon: FiColumns, desc: 'Kanban view' },
+  { to: `/projects/${projectId}/backlog`, label: 'Backlog', icon: FiCalendar, desc: 'Sprint planning' },
+  { to: `/projects/${projectId}/sprints`, label: 'Sprints', icon: FiCalendar, desc: 'Iterations' },
+  { to: `/projects/${projectId}/time`, label: 'Time', icon: FiClock, desc: 'Tracking' },
+  { to: `/projects/${projectId}/activity`, label: 'Activity', icon: FiActivity, desc: 'Log' },
+  { to: `/projects/${projectId}/filters`, label: 'Filters', icon: FiFilter, desc: 'Saved' },
+  { to: `/projects/${projectId}/dependencies`, label: 'Dependencies', icon: GoLink, desc: 'Task links' },
+  { to: `/projects/${projectId}/ai`, label: 'AI', icon: FiZap, desc: 'Neural ops' },
+]
 
 const ProjectTasksSection = ({ tasks, creator }) => {
   if (!tasks || tasks.length === 0) {
@@ -113,6 +126,23 @@ const JoinedProjectDetail = () => {
               <p className="max-w-2xl text-xs md:text-base text-gray-100 line-clamp-2 md:line-clamp-none font-medium opacity-90">{project.description}</p>
             </motion.div>
           </div>
+        </div>
+
+        {/* Navigation */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          {subLinks(projectId).map(({ to, label, icon: Icon, desc }) => (
+            <Link key={to} to={to}
+              className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-[#1a1a1a] hover:border-orange-500/30 hover:shadow-lg transition-all group"
+            >
+              <div className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-[#151515] flex items-center justify-center text-gray-500 dark:text-gray-400 group-hover:bg-orange-100 dark:group-hover:bg-orange-500/10 group-hover:text-orange-600 transition-all shrink-0">
+                <Icon size={16} />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-gray-900 dark:text-white">{label}</p>
+                <p className="text-[9px] text-gray-500 dark:text-gray-400">{desc}</p>
+              </div>
+            </Link>
+          ))}
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-7 gap-5 md:gap-8">
