@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { FiFilter, FiPlus, FiTrash2, FiEdit2, FiSave, FiX } from 'react-icons/fi'
-import PageHeader from '../../../components/PageHeader'
+import ProjectHeader from '../../../components/ui/ProjectHeader'
 import api from '../../../utils/api'
 
 const SavedFilters = () => {
@@ -56,19 +56,22 @@ const SavedFilters = () => {
   }
 
   return (
-    <div>
-      <PageHeader
-        icon={FiFilter}
-        title="Saved"
-        highlight="Filters"
-        subtitle="Saved search parameters"
-        action={
-          <button onClick={() => { setShowForm(!showForm); setEditingId(null); setForm({ name: '', criteria: '{}', isDefault: false }) }}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-br from-orange-600 to-orange-700 text-white font-bold shadow-md hover:from-orange-500 hover:to-orange-600 transition-all">
-            <FiPlus size={18} /> {showForm ? 'Cancel' : 'New Filter'}
-          </button>
-        }
-      />
+    <div className="min-h-screen bg-[#fcfaf8] dark:bg-[#000000] pt-4 transition-colors duration-300">
+      <div className="max-w-[1100px] mx-auto">
+        <ProjectHeader
+          projectId={projectId}
+          icon={FiFilter}
+          title="Saved"
+          highlight="Filters"
+          subtitle="Reusable search parameters for quick task lookup"
+          pageLabel="Filters"
+          action={
+            <button onClick={() => { setShowForm(!showForm); setEditingId(null); setForm({ name: '', criteria: '{}', isDefault: false }) }}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-br from-orange-600 to-orange-700 text-white font-bold shadow-md hover:from-orange-500 hover:to-orange-600 transition-all">
+              <FiPlus size={18} /> {showForm ? 'Cancel' : 'New Filter'}
+            </button>
+          }
+        />
 
       {showForm && (
         <motion.form initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
@@ -127,6 +130,7 @@ const SavedFilters = () => {
           ))}
         </div>
       )}
+      </div>
     </div>
   )
 }

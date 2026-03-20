@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { FiClock, FiPlus, FiTrash2, FiEdit2, FiSave, FiX } from 'react-icons/fi'
-import PageHeader from '../../../components/PageHeader'
+import ProjectHeader from '../../../components/ui/ProjectHeader'
 import api from '../../../utils/api'
 
 const TimeTracking = () => {
@@ -74,26 +74,29 @@ const TimeTracking = () => {
   }
 
   return (
-    <div>
-      <PageHeader
-        icon={FiClock}
-        title="Time"
-        highlight="Tracking"
-        subtitle="Hours logged across operations"
-        action={
-          <button onClick={() => { setShowForm(!showForm); setEditingId(null); setForm({ taskId: '', hours: '', description: '', date: new Date().toISOString().split('T')[0] }) }}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-br from-orange-600 to-orange-700 text-white font-bold shadow-md hover:from-orange-500 hover:to-orange-600 transition-all">
-            <FiPlus size={18} /> {showForm ? 'Cancel' : 'Log Time'}
-          </button>
-        }
-      />
+    <div className="min-h-screen bg-[#fcfaf8] dark:bg-[#000000] pt-4 transition-colors duration-300">
+      <div className="max-w-[1100px] mx-auto">
+        <ProjectHeader
+          icon={FiClock}
+          projectId={projectId}
+          title="Time"
+          highlight="Tracking"
+          subtitle="Hours logged across operations"
+          pageLabel="Time"
+          action={
+            <button onClick={() => { setShowForm(!showForm); setEditingId(null); setForm({ taskId: '', hours: '', description: '', date: new Date().toISOString().split('T')[0] }) }}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-br from-orange-600 to-orange-700 text-white font-bold shadow-md hover:from-orange-500 hover:to-orange-600 transition-all">
+              <FiPlus size={18} /> {showForm ? 'Cancel' : 'Log Time'}
+            </button>
+          }
+        />
 
       {report && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {[
             { label: 'Total Hours', value: report.totalHours || 0, unit: 'h' },
+            { label: 'Hours Remaining', value: tasks.reduce((sum, t) => sum + (Number(t.remainingHours) || 0), 0), unit: 'h' },
             { label: 'Total Entries', value: report.entryCount || 0, unit: '' },
-            { label: 'Tasks Tracked', value: report.tasks?.length || 0, unit: '' },
             { label: 'Avg per Entry', value: report.totalHours && report.entryCount ? (report.totalHours / report.entryCount).toFixed(1) : 0, unit: 'h' },
           ].map((stat, i) => (
             <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
@@ -184,6 +187,7 @@ const TimeTracking = () => {
           ))}
         </div>
       )}
+      </div>
     </div>
   )
 }

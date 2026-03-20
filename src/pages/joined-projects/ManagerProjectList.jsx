@@ -4,34 +4,54 @@ import { FaPeopleRoof } from 'react-icons/fa6'
 import { GrTask } from 'react-icons/gr'
 import { RiAdminLine, RiTeamLine } from 'react-icons/ri'
 import { motion } from 'framer-motion'
-import useProjectStore from '../../stores/projectStore'
+import PageHeader from '../../components/ui/Header'
+import api from '../../utils/api'
+
+const SkeletonCard = () => (
+  <div className="bg-white dark:bg-[#121212] border border-gray-100 dark:border-[#1a1a1a] rounded-xl overflow-hidden animate-pulse h-[280px]">
+    <div className="h-32 bg-gray-200 dark:bg-gray-800" />
+    <div className="px-8 py-6 space-y-3">
+      <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-3/4" />
+      <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-1/2" />
+      <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-2/3" />
+    </div>
+  </div>
+)
 
 const ManagerProjectList = () => {
-  const { managedProjects, fetchManagedProjects } = useProjectStore()
+  const [managedProjects, setManagedProjects] = useState([])
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    fetchManagedProjects()
+    const fetchData = async () => {
+      const { data, error } = await api('GET', '/joinedprojects/as-lead')
+      if (error) setError(error?.error || 'Failed to load managed projects')
+      else setManagedProjects(data || [])
+      setLoading(false)
+    }
+    fetchData()
   }, [])
 
   return (
-    <div className='min-h-screen bg-[#fcfaf8] dark:bg-[#000000] flex flex-col p-6 transition-colors duration-300'>
+    <div className='min-h-screen bg-[#fcfaf8] dark:bg-[#000000] flex flex-col transition-colors duration-300'>
       <div className="max-w-[1400px] mx-auto w-full">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-          <div className="flex items-center gap-4">
-            <div className='w-12 h-12 bg-orange-100 dark:bg-orange-500/10 rounded-xl flex items-center justify-center text-xl text-orange-600 shadow-sm'>
-              <FaPeopleRoof />
-            </div>
-            <div>
-              <h2 className="text-2xl md:text-3xl font-black text-gray-800 dark:text-white tracking-tighter">Command Center</h2>
-              <p className='text-sm text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest opacity-60'>Operational sectors under your jurisdiction</p>
-            </div>
+        <PageHeader
+          icon={FaPeopleRoof}
+          title="Command"
+          highlight="Center"
+          subtitle="Operational sectors under your jurisdiction"
+        />
+
+        <div className='h-[1px] bg-gray-200 dark:bg-[#1a1a1a] w-full mb-8'></div>
+
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+            {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
           </div>
-        </div>
-
-        <div className='h-[1px] bg-gray-200 dark:bg-[#1a1a1a] w-full mb-10'></div>
-
-        {managedProjects.length === 0 ? (
+        ) : error ? (
+          <div className="p-4 rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400 font-medium">{error}</div>
+        ) : managedProjects.length === 0 ? (
           <div className='flex flex-col items-center justify-center py-20 bg-white dark:bg-[#0a0a0a] rounded-xl border border-dashed border-gray-200 dark:border-[#1a1a1a] shadow-sm'>
             <div className="relative mb-8">
               <div className="absolute inset-0 bg-orange-500/10 blur-3xl rounded-full" />

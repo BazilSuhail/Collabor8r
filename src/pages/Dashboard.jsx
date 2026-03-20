@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { FiGrid, FiFolder, FiShield, FiPlus, FiBell, FiUser, FiMail } from 'react-icons/fi'
-import PageHeader from '../components/PageHeader'
+import PageHeader from '../components/ui/Header'
 import useAuthStore from '../stores/authStore'
 import api from '../utils/api'
 
@@ -37,7 +37,7 @@ const Dashboard = () => {
   const cards = [
     { label: 'Admin Projects', value: stats?.adminProjectsCount ?? '—', icon: FiFolder, desc: 'Projects you own', href: '/projects', color: 'from-orange-600 to-orange-700' },
     { label: 'Joined Projects', value: stats?.joinedProjectsCount ?? '—', icon: FiShield, desc: 'Projects you contribute to', href: '/projects', color: 'from-blue-500 to-blue-600' },
-    { label: 'Managing', value: stats?.managerProjectCount ?? '—', icon: FiGrid, desc: 'Projects you manage', href: '/projects', color: 'from-emerald-500 to-emerald-600' },
+    { label: 'Leading', value: stats?.leadProjectCount ?? '—', icon: FiGrid, desc: 'Projects you lead', href: '/projects', color: 'from-emerald-500 to-emerald-600' },
   ]
 
   return (

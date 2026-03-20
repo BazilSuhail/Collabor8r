@@ -23,8 +23,8 @@ const SidebarLayout = () => {
     <div className={`flex min-h-screen ${theme === 'dark' ? 'bg-[#000000]' : 'bg-[#fcfaf8]'} transition-colors duration-300`}>
       <Sidebar />
       <main
-        className={`flex-1 transition-all duration-[350ms] ease-[cubic-bezier(0.4,0,0.2,1)] pt-16 lg:pt-0 ${
-          sidebarOpen ? 'ml-[260px]' : 'ml-[80px]'
+        className={`flex-1 transition-all duration-[350ms] ease-[cubic-bezier(0.4,0,0.2,1)] pt-16 lg:pt-0 pb-20 lg:pb-0 ${
+          sidebarOpen ? 'lg:ml-[260px]' : 'lg:ml-[80px]'
         }`}
       >
         <div className="p-6">

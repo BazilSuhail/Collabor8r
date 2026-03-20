@@ -5,6 +5,7 @@ const useProjectStore = create((set) => ({
   adminProjects: [],
   joinedProjects: [],
   managedProjects: [],
+  ledProjects: [],
   currentProject: null,
 
   fetchAdminProjects: async () => {
@@ -18,8 +19,8 @@ const useProjectStore = create((set) => ({
   },
 
   fetchManagedProjects: async () => {
-    const { data, error } = await api('GET', '/joinedprojects/as-manager')
-    if (!error) set({ managedProjects: data })
+    const { data, error } = await api('GET', '/joinedprojects/as-lead')
+    if (!error) set({ managedProjects: data, ledProjects: data })
   },
 
   fetchProjectDetail: async (id) => {
@@ -27,6 +28,7 @@ const useProjectStore = create((set) => ({
     if (result.error) result = await api('GET', `/joinedprojects/${id}`)
     const project = result.data?.project || result.data
     set({ currentProject: project })
+    return project
   },
 
   createProject: async (projectData) => {
@@ -39,11 +41,13 @@ const useProjectStore = create((set) => ({
 
   updateProject: async (id, projectData) => {
     const { data, error } = await api('PUT', `/projects/${id}/update`, projectData)
-    if (!error) set({ currentProject: data })
+    if (error) throw error
+    set({ currentProject: data })
+    return data
   },
 
-  respondManagerInvite: async (id, response) => {
-    await api('PUT', `/projects/manager-response/${id}`, { response })
+  respondLeadInvite: async (id, response) => {
+    await api('PUT', `/projects/lead-response/${id}`, { response })
   },
 
   fetchProjectTeam: async (id) => {

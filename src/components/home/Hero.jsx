@@ -21,7 +21,7 @@ export default function Hero() {
   const ref = useRef(null);
 
   return (
-    <section ref={ref} className="w-full max-w-340 mx-auto px-4 sm:px-6 py-6 md:py-10 mt-15 sm:mt-5 min-h-screen flex items-center">
+    <section ref={ref} className="w-full max-w-340 mx-auto px-4 sm:px-6 py-6 md:py-10 pt-15 sm:pt-5 min-h-screen flex items-center">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full">
         
         {/* ── Main card (left 2 cols) ── */}

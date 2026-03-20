@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { FiBell, FiCheck, FiTrash2, FiZap, FiUser, FiFolder, FiShield } from 'react-icons/fi'
-import PageHeader from '../../components/PageHeader'
+import PageHeader from '../../components/ui/Header'
 import api from '../../utils/api'
 
 const typeIcons = {

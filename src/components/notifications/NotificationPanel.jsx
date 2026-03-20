@@ -12,6 +12,7 @@ const typeIcons = {
   sprint_completed: GoHourglass,
   teamMember: FiUserPlus,
   projectManager: GoPersonAdd,
+  projectLead: GoPersonAdd,
   invitationResponse: FiCheckCircle,
 }
 
@@ -53,6 +54,12 @@ const typeStyles = {
     badge: 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300',
   },
   projectManager: {
+    gradient: 'from-amber-500 to-orange-600',
+    shape: 'rounded-[10px]',
+    ring: 'ring-amber-500/20',
+    badge: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300',
+  },
+  projectLead: {
     gradient: 'from-amber-500 to-orange-600',
     shape: 'rounded-[10px]',
     ring: 'ring-amber-500/20',

@@ -1,5 +1,7 @@
 import { ReactLenis } from "lenis/react"
+import { useEffect } from 'react'
 import Navbar from '../components/layout/Navbar'
+import api from '../utils/api'
 import CanvasCursor from '../components/cursor/CanvasCursor'
 import Hero from '../components/home/Hero'
 import Features from '../components/home/Features'
@@ -11,15 +13,22 @@ import Pricing from '../components/home/Pricing'
 import Footer from '../components/home/Footer'
 
 const Home = () => {
+  useEffect(() => {
+    const key = 'serverWoken'
+    if (!sessionStorage.getItem(key)) {
+      api('get', '/health')
+      sessionStorage.setItem(key, 'true')
+    }
+  }, [])
+
   return (
     <ReactLenis root>
       <CanvasCursor />
       <div className="min-h-screen bg-white cursor-auto lg:cursor-none">
         <Navbar />
+
         <Hero />
-
         <TechStackSlider />
-
         <Words />
         <StatsSection />
         <ProjectManagementSuite />

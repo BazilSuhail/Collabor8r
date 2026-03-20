@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { FiTag, FiPlus, FiEdit2, FiTrash2 } from 'react-icons/fi'
-import PageHeader from '../../../components/PageHeader'
+import ProjectHeader from '../../../components/ui/ProjectHeader'
 import api from '../../../utils/api'
 
 const Labels = () => {
@@ -56,19 +56,22 @@ const Labels = () => {
   }
 
   return (
-    <div>
-      <PageHeader
-        icon={FiTag}
-        title="Labels"
-        highlight="& Tags"
-        subtitle="Classification system"
-        action={
-          <button onClick={() => { setShowForm(!showForm); setEditingId(null); setForm({ name: '', color: '#ea580c' }) }}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-br from-orange-600 to-orange-700 text-white font-bold shadow-md hover:from-orange-500 hover:to-orange-600 transition-all">
-            <FiPlus size={18} /> {showForm ? 'Cancel' : 'New Label'}
-          </button>
-        }
-      />
+    <div className="min-h-screen bg-[#fcfaf8] dark:bg-[#000000] pt-4 transition-colors duration-300">
+      <div className="max-w-[1100px] mx-auto">
+        <ProjectHeader
+          projectId={projectId}
+          icon={FiTag}
+          title="Labels"
+          highlight="Classification System"
+          subtitle="Categorize tasks for easy filtering"
+          pageLabel="Labels"
+          action={
+            <button onClick={() => { setShowForm(!showForm); setEditingId(null); setForm({ name: '', color: '#ea580c' }) }}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-br from-orange-600 to-orange-700 text-white font-bold shadow-md hover:from-orange-500 hover:to-orange-600 transition-all">
+              <FiPlus size={18} /> {showForm ? 'Cancel' : 'New Label'}
+            </button>
+          }
+        />
 
       {showForm && (
         <motion.form initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
@@ -121,6 +124,7 @@ const Labels = () => {
           ))}
         </div>
       )}
+      </div>
     </div>
   )
 }

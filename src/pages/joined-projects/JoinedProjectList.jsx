@@ -1,11 +1,11 @@
-import { useState, useEffect, useMemo } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { FaPeopleRoof, FaEye } from 'react-icons/fa6'
 import { GrTask } from 'react-icons/gr'
 import { RiTeamLine } from 'react-icons/ri'
 import { MdOutlineManageAccounts } from 'react-icons/md'
 import { motion } from 'framer-motion'
-import useProjectStore from '../../stores/projectStore'
+import PageHeader from '../../components/ui/Header'
 import api from '../../utils/api'
 
 const SkeletonCard = () => (
@@ -57,13 +57,19 @@ const TasksTimeline = ({ projectId }) => {
 
 const JoinedProjectList = () => {
   const navigate = useNavigate()
-  const { joinedProjects: rawJoined, fetchJoinedProjects } = useProjectStore()
-  const joinedProjects = useMemo(() => rawJoined.filter((p, i, arr) => arr.findIndex((x) => x._id === p._id) === i), [rawJoined])
+  const [joinedProjects, setJoinedProjects] = useState([])
   const [selectedProjectId, setSelectedProjectId] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   useEffect(() => {
-    fetchJoinedProjects().finally(() => setLoading(false))
+    const fetchData = async () => {
+      const { data, error } = await api('GET', '/joinedprojects/')
+      if (error) setError(error?.error || 'Failed to load joined projects')
+      else setJoinedProjects(data || [])
+      setLoading(false)
+    }
+    fetchData()
   }, [])
 
   const handleProjectClick = (projectId) => {
@@ -75,19 +81,14 @@ const JoinedProjectList = () => {
   }
 
   return (
-    <div className='min-h-screen bg-[#fcfaf8] dark:bg-[#000000] flex flex-col p-6 transition-colors duration-300'>
+    <div className='min-h-screen bg-[#fcfaf8] dark:bg-[#000000] flex flex-col transition-colors duration-300'>
       <div className="max-w-[1400px] mx-auto w-full">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-          <div className="flex items-center gap-4">
-            <div className='w-12 h-12 bg-orange-100 dark:bg-orange-500/10 rounded-xl flex items-center justify-center text-xl text-orange-600'>
-              <FaPeopleRoof />
-            </div>
-            <div>
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white tracking-tight">Joined Projects</h2>
-              <p className='text-sm text-gray-500 dark:text-gray-400 font-medium'>Collaborative sectors you are currently assigned to</p>
-            </div>
-          </div>
-        </div>
+        <PageHeader
+          icon={FaPeopleRoof}
+          title="Joined"
+          highlight="Projects"
+          subtitle="Collaborative sectors you are currently assigned to"
+        />
 
         <div className='h-[1px] bg-gray-200 dark:bg-[#1a1a1a] w-full mb-8'></div>
 
@@ -95,6 +96,8 @@ const JoinedProjectList = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
           </div>
+        ) : error ? (
+          <div className="p-4 rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400 font-medium">{error}</div>
         ) : joinedProjects.length === 0 ? (
           <div className='flex flex-col items-center justify-center py-20 bg-white dark:bg-[#0a0a0a] rounded-3xl border border-dashed border-gray-200 dark:border-[#1a1a1a] shadow-sm'>
             <div className="relative mb-8">
@@ -143,10 +146,10 @@ const JoinedProjectList = () => {
                         <span className='text-xs font-bold text-gray-400 dark:text-gray-500 tracking-widest'>Project Lead:</span>
                       </div>
                       <p className='mt-1 text-[11px] font-bold text-gray-700 dark:text-gray-300 truncate'>
-                        {project.projectManager?.status === 'Pending' ? (
-                          <span className='text-amber-600/60 italic'>Pending Synchronization...</span>
+                        {project.leads?.length ? (
+                          <span className="underline decoration-orange-500/30 underline-offset-4">{project.leads.map((l) => l.email || l).join(', ')}</span>
                         ) : (
-                          <span className="underline decoration-orange-500/30 underline-offset-4">{project.projectManager?.email || 'N/A'}</span>
+                          <span className='text-amber-600/60 italic'>No lead assigned</span>
                         )}
                       </p>
                     </div>

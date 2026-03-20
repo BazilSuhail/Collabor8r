@@ -4,7 +4,7 @@ import { FiMail, FiCheck, FiX, FiFolder, FiUsers, FiClock, FiCalendar, FiAlertTr
 import { GoPersonAdd } from 'react-icons/go'
 import { RxCross2 } from 'react-icons/rx'
 import { IoCheckmarkDoneCircleOutline } from 'react-icons/io5'
-import PageHeader from '../../components/PageHeader'
+import PageHeader from '../../components/ui/Header'
 import api from '../../utils/api'
 
 const FILTERS = [
@@ -158,7 +158,7 @@ const Invitations = () => {
       ) : (
         <div className="space-y-3 w-full">
           {filtered.map((inv) => {
-            const isManager = inv.role === 'projectManager' || inv.type === 'projectManager'
+            const isManager = inv.role === 'lead' || inv.type === 'projectLead'
             const Icon = isManager ? GoPersonAdd : (inv.project || inv.projectName ? FiFolder : FiUsers)
             const expired = inv.status === 'pending' && new Date(inv.expiresAt) <= now
             const left = daysLeft(inv.expiresAt)

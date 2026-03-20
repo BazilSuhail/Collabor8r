@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { FiCalendar, FiPlus, FiChevronRight, FiX } from 'react-icons/fi'
-import PageHeader from '../../../components/PageHeader'
+import { FiCalendar, FiPlus, FiChevronRight } from 'react-icons/fi'
+import ProjectHeader from '../../../components/ui/ProjectHeader'
 import api from '../../../utils/api'
 
 const SprintPlanning = () => {
   const { projectId } = useParams()
+  const navigate = useNavigate()
   const [sprints, setSprints] = useState([])
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
@@ -51,19 +52,22 @@ const SprintPlanning = () => {
   }
 
   return (
-    <div>
-      <PageHeader
-        icon={FiCalendar}
-        title="Sprint"
-        highlight="Planning"
-        subtitle="Backlog and iteration management"
-        action={
-          <button onClick={() => setShowForm(!showForm)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-br from-orange-600 to-orange-700 text-white font-bold shadow-md hover:from-orange-500 hover:to-orange-600 transition-all">
-            <FiPlus size={18} /> New Sprint
-          </button>
-        }
-      />
+    <div className="min-h-screen bg-[#fcfaf8] dark:bg-[#000000] pt-4 transition-colors duration-300">
+      <div className="max-w-[1300px] mx-auto">
+        <ProjectHeader
+          projectId={projectId}
+          icon={FiCalendar}
+          title="Sprint"
+          highlight="Planning"
+          subtitle="Backlog and iteration management"
+          pageLabel="Backlog"
+          action={
+            <button onClick={() => setShowForm(!showForm)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-br from-orange-600 to-orange-700 text-white font-bold shadow-md hover:from-orange-500 hover:to-orange-600 transition-all">
+              <FiPlus size={18} /> New Sprint
+            </button>
+          }
+        />
 
       {showForm && (
         <motion.form initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
@@ -107,7 +111,9 @@ const SprintPlanning = () => {
           ) : (
             <div className="space-y-2">
               {sprints.map((sprint) => (
-                <div key={sprint._id} className="flex items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-[#151515] hover:bg-orange-50 dark:hover:bg-orange-500/5 transition-all border border-transparent hover:border-orange-500/20">
+                <div key={sprint._id}
+                  onClick={() => navigate(`/projects/${projectId}/sprints`)}
+                  className="flex items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-[#151515] hover:bg-orange-50 dark:hover:bg-orange-500/5 transition-all border border-transparent hover:border-orange-500/20 cursor-pointer">
                   <div className="flex items-center gap-3 min-w-0 flex-1">
                     <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-600 to-orange-700 flex items-center justify-center text-white shrink-0">
                       <FiCalendar size={16} />
@@ -118,6 +124,7 @@ const SprintPlanning = () => {
                       <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
                         {sprint.startDate ? new Date(sprint.startDate).toLocaleDateString() : '—'} - {sprint.endDate ? new Date(sprint.endDate).toLocaleDateString() : '—'}
                       </p>
+                      <p className="text-[10px] text-gray-400 font-bold mt-0.5">{sprint.taskCount || 0} tasks</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0 ml-2">
@@ -126,7 +133,7 @@ const SprintPlanning = () => {
                       sprint.status === 'completed' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
                       'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                     }`}>{sprint.status || 'planned'}</span>
-                    <button onClick={() => setAddingToSprint(sprint._id)}
+                    <button onClick={(e) => { e.stopPropagation(); setAddingToSprint(sprint._id) }}
                       className="p-1.5 rounded-lg text-gray-400 hover:text-orange-600 hover:bg-orange-100 dark:hover:bg-orange-500/10 transition-all" title="Add tasks">
                       <FiPlus size={14} />
                     </button>
@@ -202,6 +209,7 @@ const SprintPlanning = () => {
             </div>
           )}
         </div>
+      </div>
       </div>
     </div>
   )

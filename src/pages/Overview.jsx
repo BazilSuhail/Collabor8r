@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { FiActivity, FiFolder, FiUsers, FiShield, FiCheckCircle, FiClock, FiAlertTriangle, FiBarChart2 } from 'react-icons/fi'
-import PageHeader from '../components/PageHeader'
+import PageHeader from '../components/ui/Header'
 import api from '../utils/api'
 
 const StatCard = ({ icon: Icon, label, value, color, delay }) => (
@@ -43,7 +43,7 @@ const Overview = () => {
   const counts = stats?.projectCounts || stats || {}
   const adminCount = counts.adminProjectsCount ?? counts.adminProjects ?? '-'
   const joinedCount = counts.joinedProjectsCount ?? counts.joinedProjects ?? '-'
-  const managerCount = counts.managerProjectCount ?? counts.managerProjects ?? '-'
+  const leadCount = counts.leadProjectCount ?? counts.leadProjects ?? '-'
   const taskCount = Array.isArray(stats?.tasks) ? stats.tasks.length : tasks.length
   const completedTasks = tasks.filter((t) => t.status === 'Completed').length
   const highPriority = tasks.filter((t) => t.priority === 'High').length
@@ -67,7 +67,7 @@ const Overview = () => {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard icon={FiFolder} label="Admin Sectors" value={adminCount} color="bg-gradient-to-br from-orange-600 to-orange-700" delay={0} />
         <StatCard icon={FiUsers} label="Joined Sectors" value={joinedCount} color="bg-gradient-to-br from-blue-600 to-blue-700" delay={0.05} />
-        <StatCard icon={FiShield} label="Managed Sectors" value={managerCount} color="bg-gradient-to-br from-purple-600 to-purple-700" delay={0.1} />
+        <StatCard icon={FiShield} label="Led Sectors" value={leadCount} color="bg-gradient-to-br from-purple-600 to-purple-700" delay={0.1} />
         <StatCard icon={FiCheckCircle} label="Total Tasks" value={taskCount} color="bg-gradient-to-br from-green-600 to-green-700" delay={0.15} />
       </div>
 

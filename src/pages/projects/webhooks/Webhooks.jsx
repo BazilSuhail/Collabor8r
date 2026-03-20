@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { FiZap, FiPlus, FiTrash2, FiEdit2, FiSave, FiPlay } from 'react-icons/fi'
-import PageHeader from '../../../components/PageHeader'
+import ProjectHeader from '../../../components/ui/ProjectHeader'
 import api from '../../../utils/api'
 
-const eventOptions = ['task.created', 'task.updated', 'task.deleted', 'task.completed', 'sprint.activated', 'sprint.completed', 'comment.added', 'member.added']
+const eventOptions = ['project.created', 'task.created', 'task.updated', 'task.completed', 'task.deleted', 'sprint.activated', 'sprint.completed', 'comment.added', 'member.added']
 
 const Webhooks = () => {
   const { projectId } = useParams()
@@ -72,19 +72,22 @@ const Webhooks = () => {
   }
 
   return (
-    <div>
-      <PageHeader
-        icon={FiZap}
-        title="Webhook"
-        highlight="Integrations"
-        subtitle="Configure external communications"
-        action={
-          <button onClick={() => { setShowForm(!showForm); setEditingId(null); setForm({ name: '', url: '', events: [], secret: '' }) }}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-br from-orange-600 to-orange-700 text-white font-bold shadow-md hover:from-orange-500 hover:to-orange-600 transition-all">
-            <FiPlus size={18} /> {showForm ? 'Cancel' : 'New Webhook'}
-          </button>
-        }
-      />
+    <div className="min-h-screen bg-[#fcfaf8] dark:bg-[#000000] pt-4 transition-colors duration-300">
+      <div className="max-w-[1000px] mx-auto">
+        <ProjectHeader
+          icon={FiZap}
+          projectId={projectId}
+          title="Webhook"
+          highlight="Integrations"
+          subtitle="Configure external communications"
+          pageLabel="Webhooks"
+          action={
+            <button onClick={() => { setShowForm(!showForm); setEditingId(null); setForm({ name: '', url: '', events: [], secret: '' }) }}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-br from-orange-600 to-orange-700 text-white font-bold shadow-md hover:from-orange-500 hover:to-orange-600 transition-all">
+              <FiPlus size={18} /> {showForm ? 'Cancel' : 'New Webhook'}
+            </button>
+          }
+        />
 
       {showForm && (
         <motion.form initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
@@ -164,6 +167,7 @@ const Webhooks = () => {
           ))}
         </div>
       )}
+      </div>
     </div>
   )
 }

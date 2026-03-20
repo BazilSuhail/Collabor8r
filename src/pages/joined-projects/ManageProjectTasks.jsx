@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useNavigate } from 'react-router-dom'
 import TaskModal from '../../components/modals/ManageTask'
 import { GrChapterAdd } from 'react-icons/gr'
-import { FiFolder, FiTrash2, FiEdit3, FiTag, FiCalendar } from 'react-icons/fi'
+import { FiTrash2, FiEdit3, FiCalendar, FiZap, FiList, FiArrowLeft, FiChevronRight } from 'react-icons/fi'
 import { LuDoorOpen } from 'react-icons/lu'
 import { motion, AnimatePresence } from 'framer-motion'
 import api from '../../utils/api'
@@ -10,8 +10,10 @@ import useAuthStore from '../../stores/authStore'
 
 const ManageProjectTasks = () => {
   const { projectId } = useParams()
+  const navigate = useNavigate()
   const { user } = useAuthStore()
   const [isModalOpen, setModalOpen] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [projectName, setProjectName] = useState('')
   const [projectTeam, setProjectTeam] = useState(0)
   const [tasks, setTasks] = useState([])
@@ -57,6 +59,7 @@ const ManageProjectTasks = () => {
         const { data: mgrData } = await api('GET', '/joinedprojects/' + projectId)
         if (mgrData?.project?.manager === user?._id) setRole('manager')
       }
+      setLoading(false)
     }
     load()
   }, [projectId])
@@ -74,22 +77,6 @@ const ManageProjectTasks = () => {
         [field]: arr.includes(id) ? arr.filter((x) => x !== id) : [...arr, id]
       }
     })
-  }
-
-  const handleCreateTask = async (e) => {
-    e.preventDefault()
-    const body = {
-      ...newTask,
-      projectId,
-      assignedTo: !isCreatorOrManager ? (newTask.assignedTo || user?._id) : newTask.assignedTo,
-    }
-    if (!body.assignedTo) body.assignedTo = user?._id
-    const { error: err } = await api('POST', '/manageTasks/', body)
-    if (err) { setError('Failed to create task.'); return }
-    setSuccess('Task created successfully.')
-    setNewTask({ title: '', description: '', status: 'Not Started', priority: 'Medium', dueDate: '', assignedTo: '', sprintId: '', estimateHours: '', labels: [], parentId: '' })
-    await fetchAll()
-    handleCloseModal()
   }
 
   const handleEditTask = (task) => {
@@ -139,28 +126,47 @@ const ManageProjectTasks = () => {
   }
 
   return (
-    <div className='min-h-screen bg-[#fcfaf8] w-full dark:bg-[#000000] p-4 md:p-6 transition-colors duration-300'>
+    <div className='min-h-screen bg-[#fcfaf8] w-full dark:bg-[#000000] pt-4 transition-colors duration-300'>
       <div className="max-w-[1400px] mx-auto">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4 mb-6 md:mb-8">
-          <div className="flex items-center gap-3 md:gap-4">
-            <div className='w-11 h-11 md:w-12 md:h-12 bg-orange-100 dark:bg-orange-500/10 rounded-lg md:rounded-xl flex items-center justify-center text-lg md:text-xl text-orange-600'>
-              <FiFolder />
+        <nav className="flex items-center gap-1.5 mb-5">
+          <button onClick={() => navigate(-1)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-500/10 transition-all">
+            <FiArrowLeft size={14} /> Back
+          </button>
+          <span className="text-gray-300 dark:text-zinc-700"><FiChevronRight size={14} /></span>
+          <span className="text-xs font-bold text-orange-600 px-2 py-1.5 bg-orange-50 dark:bg-orange-500/10 rounded-lg truncate max-w-[180px] sm:max-w-xs">
+            {loading ? 'Loading...' : projectName}
+          </span>
+        </nav>
+
+        <header className="mb-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex items-start gap-4 min-w-0">
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white shadow-lg shadow-orange-500/20 shrink-0">
+                <FiZap size={18} className="sm:text-xl" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-gray-400 dark:text-gray-500">
+                  Operation Board {loading ? '' : `· ${tasks.length} operation${tasks.length === 1 ? '' : 's'}`}
+                </p>
+                <h1 className="mt-1 text-lg sm:text-2xl font-bold text-gray-900 dark:text-gray-50 tracking-tight leading-tight break-words">
+                  {loading ? 'Loading...' : projectName}
+                </h1>
+                <p className="mt-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-medium hidden sm:block">
+                  Manage and assign operations to team members
+                </p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-xl md:text-3xl font-black text-gray-800 dark:text-white tracking-tighter">{projectName || 'Project'} Tasks</h2>
-              <p className='text-xs md:text-sm text-gray-500 dark:text-gray-400 font-medium'>Manage and assign tasks to team members</p>
-            </div>
+            {!loading && projectTeam > 0 && (
+              <button onClick={() => navigate(`/projects/${projectId}/tasks/create`)}
+                className="flex items-center justify-center gap-2 px-4 md:px-6 py-2.5 md:py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-bold text-xs md:text-sm transition-all shadow-md shadow-orange-600/20 shrink-0">
+                <GrChapterAdd className="text-base md:text-lg text-white" />
+                <span>New Task</span>
+              </button>
+            )}
           </div>
-
-          {projectTeam > 0 && (
-            <button onClick={handleOpenModal} className='flex items-center justify-center gap-2 px-4 md:px-6 py-2.5 md:py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg md:rounded-xl font-bold text-xs md:text-sm transition-all shadow-md shadow-orange-600/20'>
-              <GrChapterAdd className="text-base md:text-lg text-white" />
-              <span>New Task</span>
-            </button>
-          )}
-        </div>
-
-        <div className='h-px bg-gray-200 dark:bg-[#1a1a1a] w-full mb-6 md:mb-8'></div>
+          <div className="mt-5 h-px bg-gradient-to-r from-orange-500/40 via-gray-200 dark:via-zinc-800 to-transparent" />
+        </header>
 
         {error && (
           <div className="mb-4 px-4 py-2.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/30 text-red-700 dark:text-red-400 rounded-xl text-sm font-bold">{error}</div>
@@ -169,7 +175,23 @@ const ManageProjectTasks = () => {
           <div className="mb-4 px-4 py-2.5 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-900/30 text-green-700 dark:text-green-400 rounded-xl text-sm font-bold">{success}</div>
         )}
 
-        {projectTeam === 0 ? (
+        {loading ? (
+          <div className="animate-pulse space-y-4">
+            <div className="h-12 bg-gray-200 dark:bg-zinc-800 rounded-xl w-48" />
+            <div className="bg-white dark:bg-[#0a0a0a] rounded-2xl border border-gray-100 dark:border-[#1a1a1a] overflow-hidden">
+              <div className="grid grid-cols-7 gap-4 px-6 py-4 bg-gray-50 dark:bg-zinc-900/50 border-b border-gray-100 dark:border-[#1a1a1a]">
+                {Array.from({ length: 7 }).map((_, i) => <div key={i} className="h-3 bg-gray-200 dark:bg-zinc-800 rounded" />)}
+              </div>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="grid grid-cols-7 gap-4 px-6 py-5 border-b border-gray-50 dark:border-zinc-900/60">
+                  {Array.from({ length: 7 }).map((_, j) => (
+                    <div key={j} className="h-4 bg-gray-100 dark:bg-zinc-800/60 rounded-lg" />
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : projectTeam === 0 ? (
           <div className='flex flex-col items-center justify-center py-16 md:py-20 bg-white dark:bg-[#0a0a0a] rounded-2xl md:rounded-3xl border border-dashed border-gray-200 dark:border-[#1a1a1a]'>
             <div className="relative mb-4 md:mb-6">
               <div className="absolute inset-0 bg-red-500/10 blur-3xl rounded-full" />
@@ -190,9 +212,19 @@ const ManageProjectTasks = () => {
             </div>
 
             {tasks.length === 0 ? (
-              <div className="py-12 text-center bg-white dark:bg-[#0a0a0a] rounded-2xl border border-gray-100 dark:border-[#1a1a1a]">
-                <p className="text-sm md:text-base text-gray-400 font-medium">No tasks yet. Create one to get started.</p>
-              </div>
+              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                className="py-14 md:py-16 text-center bg-white dark:bg-[#0a0a0a] rounded-2xl border border-dashed border-gray-200 dark:border-[#1a1a1a]">
+                <div className="mx-auto mb-4 w-12 h-12 rounded-xl bg-orange-100 dark:bg-orange-500/10 flex items-center justify-center text-orange-600">
+                  <FiList size={20} />
+                </div>
+                <p className="text-base font-bold text-gray-800 dark:text-gray-100 mb-1">No tasks yet</p>
+                <p className="text-sm text-gray-400 font-medium mb-6">Create your first operation to get this board moving.</p>
+                <button onClick={() => navigate(`/projects/${projectId}/tasks/create`)}
+                  className="inline-flex items-center gap-2 px-6 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-bold text-xs md:text-sm transition-all shadow-md shadow-orange-600/20">
+                  <GrChapterAdd className="text-white" />
+                  Create Task
+                </button>
+              </motion.div>
             ) : (
               <>
                 <div className="md:hidden space-y-3">
@@ -307,7 +339,7 @@ const ManageProjectTasks = () => {
           </div>
         )}
 
-        <TaskModal isOpen={isModalOpen} onClose={handleCloseModal} onSubmit={editingTaskId ? handleUpdateTask : handleCreateTask}
+        <TaskModal isOpen={isModalOpen} onClose={handleCloseModal} onSubmit={handleUpdateTask}
           newTask={newTask} users={users} handleChange={handleChange} handleCheckboxChange={handleCheckboxChange}
           editingTaskId={editingTaskId} sprints={sprints} labels={labels} allTasks={tasks}
           currentUser={user} isCreatorOrManager={isCreatorOrManager} />

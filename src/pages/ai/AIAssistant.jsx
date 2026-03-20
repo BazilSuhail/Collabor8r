@@ -2,11 +2,12 @@ import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FiCpu, FiMessageSquare, FiZap, FiUser, FiCalendar, FiSearch, FiCheckCircle, FiAlertTriangle, FiBarChart2, FiList, FiLoader, FiChevronRight, FiCopy, FiExternalLink, FiPlus } from 'react-icons/fi'
-import PageHeader from '../../components/PageHeader'
+import PageHeader from '../../components/ui/Header'
 import api from '../../utils/api'
 
 const features = [
   { id: 'create-task', icon: FiPlus, label: 'Create Task from Prompt', desc: 'Natural language → structured task', endpoint: '/ai/create-task', method: 'POST', input: 'prompt', inputLabel: 'Describe the task', inputPlaceholder: 'e.g. Set up CI/CD pipeline for the backend project', needProject: true },
+  { id: 'create-sprint', icon: FiCalendar, label: 'Create Sprint', desc: 'Plain command → sprint with dates & goal', endpoint: '/ai/create-sprint', method: 'POST', input: 'prompt', inputLabel: 'Describe the sprint', inputPlaceholder: 'e.g. 2 week sprint on payment fixes starting next Monday', needProject: true },
   { id: 'breakdown', icon: FiList, label: 'Break Down Task', desc: 'Generate subtask breakdown', endpoint: '/ai/breakdown-task', method: 'POST', input: 'taskDescription', inputLabel: 'Task description', inputPlaceholder: 'e.g. Implement user authentication system', needProject: false },
   { id: 'suggest-assignee', icon: FiUser, label: 'Suggest Assignee', desc: 'AI recommends best team member', endpoint: '/ai/suggest-assignee', method: 'POST', input: 'taskDescription', inputLabel: 'Task description', inputPlaceholder: 'e.g. Frontend UI for dashboard', needProject: true },
   { id: 'recommend-metadata', icon: FiCalendar, label: 'Recommend Metadata', desc: 'Priority, status & due date', endpoint: '/ai/recommend-metadata', method: 'POST', input: 'title', inputLabel: 'Task title + description', inputPlaceholder: 'e.g. Fix login bug on production', needProject: false },
@@ -70,6 +71,16 @@ const AIAssistant = () => {
           {task.title && <p className="text-sm font-bold text-gray-900 dark:text-white">{task.title}</p>}
           {task.description && <p className="text-xs text-gray-500">{task.description}</p>}
           {(task.priority || task.status) && <p className="text-xs text-gray-400">{task.priority && `Priority: ${task.priority}`}{task.status && ` · Status: ${task.status}`}</p>}
+        </div>
+      )
+    }
+    if (id === 'create-sprint') {
+      const sprint = data.sprint || data.aiExtracted || data
+      return (
+        <div className="space-y-1">
+          {sprint.name && <p className="text-sm font-bold text-gray-900 dark:text-white">{sprint.name}</p>}
+          {sprint.goal && <p className="text-xs text-gray-500">{sprint.goal}</p>}
+          {(sprint.startDate || sprint.endDate) && <p className="text-xs text-gray-400 font-medium">{sprint.startDate ? new Date(sprint.startDate).toLocaleDateString() : ''} — {sprint.endDate ? new Date(sprint.endDate).toLocaleDateString() : ''}</p>}
         </div>
       )
     }

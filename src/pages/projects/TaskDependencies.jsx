@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { FiLink, FiPlus, FiTrash2, FiChevronRight } from 'react-icons/fi'
 import { GoLink } from 'react-icons/go'
 import { MdOutlineLink } from 'react-icons/md'
-import PageHeader from '../../components/PageHeader'
+import ProjectHeader from '../../components/ui/ProjectHeader'
 import api from '../../utils/api'
 
 const TaskDependencies = () => {
@@ -82,19 +82,22 @@ const TaskDependencies = () => {
   }
 
   return (
-    <div>
-      <PageHeader
-        icon={GoLink}
-        title="Task"
-        highlight="Dependencies"
-        subtitle="Link tasks with dependency relationships"
-        action={
-          <button onClick={() => setShowForm(!showForm)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-br from-orange-600 to-orange-700 text-white font-bold shadow-md hover:from-orange-500 hover:to-orange-600 transition-all">
-            <FiPlus size={18} /> {showForm ? 'Cancel' : 'New Link'}
-          </button>
-        }
-      />
+    <div className="min-h-screen bg-[#fcfaf8] dark:bg-[#000000] pt-4 transition-colors duration-300">
+      <div className="max-w-[1100px] mx-auto">
+        <ProjectHeader
+          icon={GoLink}
+          projectId={projectId}
+          title="Task"
+          highlight="Dependencies"
+          subtitle="Link tasks with dependency relationships"
+          pageLabel="Dependencies"
+          action={
+            <button onClick={() => setShowForm(!showForm)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-br from-orange-600 to-orange-700 text-white font-bold shadow-md hover:from-orange-500 hover:to-orange-600 transition-all">
+              <FiPlus size={18} /> {showForm ? 'Cancel' : 'New Link'}
+            </button>
+          }
+        />
 
       {showForm && (
         <motion.form initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
@@ -132,9 +135,10 @@ const TaskDependencies = () => {
               className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-[#1a1a1a] bg-white dark:bg-[#000] text-gray-900 dark:text-white font-medium focus:ring-2 focus:ring-orange-500 outline-none transition appearance-none"
             >
               <option value="blocks">Blocks</option>
-              <option value="depends_on">Depends On</option>
-              <option value="related_to">Related To</option>
+              <option value="blocked-by">Blocked By</option>
+              <option value="relates-to">Relates To</option>
               <option value="duplicates">Duplicates</option>
+              <option value="depends-on">Depends On</option>
             </select>
           </div>
 
@@ -169,8 +173,9 @@ const TaskDependencies = () => {
                       <span className="text-sm font-bold text-gray-900 dark:text-white truncate max-w-[200px]">{getTaskTitle(link.sourceTaskId)}</span>
                       <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
                         link.linkType === 'blocks' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
-                        link.linkType === 'depends_on' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
-                        link.linkType === 'related_to' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
+                        link.linkType === 'blocked-by' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
+                        link.linkType === 'depends-on' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' :
+                        link.linkType === 'relates-to' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
                         'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-400'
                       }`}>{link.linkType}</span>
                       <FiChevronRight size={14} className="text-gray-400 shrink-0" />
@@ -186,6 +191,7 @@ const TaskDependencies = () => {
             </motion.div>
           ))
         )}
+      </div>
       </div>
     </div>
   )

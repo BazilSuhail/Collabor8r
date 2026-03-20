@@ -186,7 +186,7 @@ const Profile = () => {
       >
         {/* Cover Image - Using theme image */}
         <div
-          className="relative h-56 bg-cover bg-center bg-no-repeat"
+          className="relative h-102 md:h-56 bg-cover bg-center bg-no-repeat"
           style={{
             backgroundImage: `url('/themes/1.jpg')`,
           }}

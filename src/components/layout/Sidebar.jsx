@@ -31,31 +31,6 @@ const isNavMatch = (to, pathname) => {
   return pathname === to
 }
 
-const MobileNavLink = ({ to, icon, label, delay, onClick }) => {
-  const location = useLocation()
-  const active = isNavMatch(to, location.pathname)
-  const end = projectNavs.includes(to)
-  return (
-    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay }}>
-      <NavLink
-        to={to}
-        end={end}
-        onClick={onClick}
-        className={`flex items-center p-2.5 rounded-lg transition-all duration-200 ${
-          active
-            ? 'bg-orange-600/10 text-orange-600'
-            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-white'
-        }`}
-      >
-        <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
-          {icon}
-        </motion.div>
-        <span className="ml-3 font-medium text-sm">{label}</span>
-      </NavLink>
-    </motion.div>
-  )
-}
-
 const sidebarNavItems = [
   { to: '/dashboard', label: 'Dashboard', icon: <RxDashboard size={20} /> },
   { to: '/overview', label: 'Overview', icon: <MdOutlineFolderShared size={20} /> },
@@ -76,7 +51,8 @@ const Sidebar = () => {
   const { sidebarOpen, toggleSidebar, theme, toggleTheme } = useUiStore()
   const [projectColors, setProjectColors] = useState({})
   const location = useLocation()
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
+  const [isMobileSheetOpen, setIsMobileSheetOpen] = useState(false)
+  const [barVisible, setBarVisible] = useState(true)
   const { unreadCount, togglePanel: toggleNotificationPanel, fetchNotifications, listenSocket } = useNotificationStore()
 
   useEffect(() => {
@@ -93,6 +69,23 @@ const Sidebar = () => {
     setProjectColors(colorMapping)
   }, [joinedProjects])
 
+  useEffect(() => {
+    let lastY = window.scrollY
+    const onScroll = () => {
+      const y = window.scrollY
+      const delta = y - lastY
+      if (delta > 8) {
+        setBarVisible(false)
+        setIsMobileSheetOpen(false)
+      } else if (delta < -4) {
+        setBarVisible(true)
+      }
+      lastY = y
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
   const handleProjectClick = (projectId) => {
     navigate(`/projects/${projectId}`)
   }
@@ -101,6 +94,9 @@ const Sidebar = () => {
     logout()
     navigate('/login')
   }
+
+  const quickPaths = ['/dashboard', '/overview', '/workflow']
+  const showQuickLinks = quickPaths.includes(location.pathname)
 
   const sidebarVariants = {
     expanded: { width: 260 },
@@ -147,127 +143,178 @@ const Sidebar = () => {
           </motion.button>
 
           <motion.button
-            onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+            onClick={toggleTheme}
             className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
           >
-            <motion.svg
-              width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-              animate={{ rotate: isMobileSidebarOpen ? 180 : 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <line x1="3" y1="6" x2="21" y2="6" />
-              <line x1="3" y1="12" x2="21" y2="12" />
-              <line x1="3" y1="18" x2="21" y2="18" />
-            </motion.svg>
+            {theme === 'dark' ? (
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+              </svg>
+            ) : (
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+              </svg>
+            )}
           </motion.button>
         </div>
       </motion.div>
 
-      {/* MOBILE SIDEBAR */}
+      {/* FLOATING BOTTOM BAR (mobile/tablet) */}
+      <motion.div
+        className="lg:hidden fixed left-2 right-2 z-40 flex items-center justify-between"
+        style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 2rem)' }}
+        animate={{ y: barVisible && !isMobileSheetOpen ? 0 : 120 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+      >
+        {/* Quick links - left */}
+        {showQuickLinks && (
+          <div className="flex items-center bg-white dark:bg-[#0d0d0d] rounded-2xl border border-gray-200 dark:border-gray-800/50 shadow-lg backdrop-blur-sm p-1.5 gap-1">
+            {[
+              { to: '/dashboard', label: 'Dashboard', icon: <RxDashboard size={18} /> },
+              { to: '/overview', label: 'Overview', icon: <MdOutlineFolderShared size={18} /> },
+              { to: '/workflow', label: 'Workflow', icon: <BsGraphUp size={18} /> },
+            ].map((item) => {
+              const active = isNavMatch(item.to, location.pathname)
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all duration-200 min-w-[64px] ${
+                    active
+                      ? 'bg-orange-600/10 text-orange-600'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+                >
+                  {item.icon}
+                  <span className="text-[10px] font-semibold">{item.label}</span>
+                </NavLink>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Hamburger - separate, right */}
+        <motion.button
+          onClick={() => setIsMobileSheetOpen(!isMobileSheetOpen)}
+          className="ml-auto p-3 bg-white dark:bg-[#0d0d0d] rounded-2xl border border-gray-200 dark:border-gray-800/50 shadow-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
+          aria-label="Open menu"
+        >
+          <motion.svg
+            width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+            animate={{ rotate: isMobileSheetOpen ? 180 : 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </motion.svg>
+        </motion.button>
+      </motion.div>
+
+      {/* MOBILE BOTTOM SHEET */}
       <AnimatePresence>
-        {isMobileSidebarOpen && (
+        {isMobileSheetOpen && (
           <>
             <motion.div
-              className="lg:hidden fixed inset-0 bg-black/50 z-40 top-16"
+              className="lg:hidden fixed inset-0 bg-black/50 z-50"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setIsMobileSidebarOpen(false)}
+              onClick={() => setIsMobileSheetOpen(false)}
             />
             <motion.div
-              className="lg:hidden fixed top-16 left-0 bottom-0 w-72 bg-white dark:bg-[#0d0d0d] border-r border-gray-200 dark:border-gray-800/50 z-40 overflow-y-auto"
-              initial={{ x: -288 }}
-              animate={{ x: 0 }}
-              exit={{ x: -288 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-[#0d0d0d] rounded-t-3xl border-t border-gray-200 dark:border-gray-800/50 max-h-[80vh] overflow-y-auto"
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', stiffness: 300, damping: 32 }}
             >
-              <div className="flex flex-col h-full p-4 space-y-2">
-                <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}>
-                  <Link to="/profile" onClick={() => setIsMobileSidebarOpen(false)}>
-                    <div className="flex items-center p-3 rounded-lg bg-gray-100 dark:bg-gray-800/30 border border-gray-200 dark:border-gray-800/50 mb-6">
-                      <img
-                        src={`/avatars/${user?.avatar || '1'}.jpg`}
-                        alt="Profile"
-                        className="w-10 h-10 rounded-full object-cover"
-                        onError={(e) => {
-                          e.target.style.display = 'none'
-                          const fb = e.target.nextSibling
-                          if (fb) fb.style.display = 'flex'
-                        }}
-                      />
-                      <div className="hidden w-10 h-10 rounded-full bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-500/20 dark:to-orange-600/20 items-center justify-center text-orange-600 dark:text-orange-400 text-sm font-bold">
-                        {user?.name?.charAt(0)?.toUpperCase()}
-                      </div>
-                      <div className="flex-1 ml-3">
-                        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{user?.name}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
-                      </div>
-                    </div>
-                  </Link>
-                </motion.div>
+              <div className="flex justify-center pt-3 pb-1">
+                <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-gray-700" />
+              </div>
 
-                <div className="space-y-1 flex-1">
-                  {sidebarNavItems.map((item, i) => (
-                    <MobileNavLink
+              <div className="flex items-center gap-3 px-5 py-3">
+                <Link to="/profile" onClick={() => setIsMobileSheetOpen(false)} className="flex items-center flex-1">
+                  <img
+                    src={`/avatars/${user?.avatar || '1'}.jpg`}
+                    alt="Profile"
+                    className="w-10 h-10 rounded-full object-cover"
+                    onError={(e) => {
+                      e.target.style.display = 'none'
+                      const fb = e.target.nextSibling
+                      if (fb) fb.style.display = 'flex'
+                    }}
+                  />
+                  <div className="hidden w-10 h-10 rounded-full bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-500/20 dark:to-orange-600/20 items-center justify-center text-orange-600 dark:text-orange-400 text-sm font-bold">
+                    {user?.name?.charAt(0)?.toUpperCase()}
+                  </div>
+                  <div className="flex-1 ml-3">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{user?.name}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
+                  </div>
+                </Link>
+              </div>
+
+              <div className="px-3 pb-6 space-y-1">
+                <p className="px-3 pt-1 pb-2 text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                  Menu
+                </p>
+                {sidebarNavItems.map((item) => {
+                  const active = isNavMatch(item.to, location.pathname)
+                  const end = projectNavs.includes(item.to)
+                  return (
+                    <NavLink
                       key={item.to}
                       to={item.to}
-                      icon={item.icon}
-                      label={item.label}
-                      delay={0.15 + i * 0.05}
-                      onClick={() => setIsMobileSidebarOpen(false)}
-                    />
-                  ))}
-
-                  {joinedProjects.length > 0 && (
-                    <motion.div
-                      className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-800/50"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.45 }}
+                      end={end}
+                      onClick={() => setIsMobileSheetOpen(false)}
+                      className={`flex items-center p-2.5 rounded-lg transition-all duration-200 ${
+                        active
+                          ? 'bg-orange-600/10 text-orange-600'
+                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-white'
+                      }`}
                     >
-                      <p className="px-3 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">
-                        Projects
-                      </p>
-                      {joinedProjects.map((project, index) => (
-                        <motion.div
-                          key={project._id}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: 0.45 + index * 0.05 }}
-                          onClick={() => {
-                            handleProjectClick(project._id)
-                            setIsMobileSidebarOpen(false)
-                          }}
-                          className="flex items-center p-2.5 mx-1 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 cursor-pointer group transition-all"
-                          whileHover={{ x: 4 }}
-                          whileTap={{ scale: 0.98 }}
-                        >
-                          <div
-                            className={`w-6 h-6 text-xs flex items-center justify-center text-white font-bold rounded-md ${projectColors[project._id] || 'bg-gray-400'} flex-shrink-0`}
-                          >
-                            {project.name?.charAt(0)}
-                          </div>
-                          <p className="ml-3 text-sm font-medium text-gray-600 dark:text-gray-400 group-hover:text-orange-600 dark:group-hover:text-orange-400 truncate">
-                            {project.name}
-                          </p>
-                        </motion.div>
-                      ))}
-                    </motion.div>
-                  )}
-                </div>
+                      {item.icon}
+                      <span className="ml-3 font-medium text-sm">{item.label}</span>
+                    </NavLink>
+                  )
+                })}
 
-                <motion.div
-                  className="space-y-2 border-t border-gray-200 dark:border-gray-800/50 pt-4"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.5 }}
-                >
+                {joinedProjects.length > 0 && (
+                  <div className="pt-3 mt-3 border-t border-gray-200 dark:border-gray-800/50">
+                    <p className="px-3 pb-2 text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                      Projects
+                    </p>
+                    {joinedProjects.map((project) => (
+                      <div
+                        key={project._id}
+                        onClick={() => {
+                          handleProjectClick(project._id)
+                          setIsMobileSheetOpen(false)
+                        }}
+                        className="flex items-center p-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 cursor-pointer group transition-all"
+                      >
+                        <div
+                          className={`w-6 h-6 text-xs flex items-center justify-center text-white font-bold rounded-md ${projectColors[project._id] || 'bg-gray-400'} flex-shrink-0`}
+                        >
+                          {project.name?.charAt(0)}
+                        </div>
+                        <p className="ml-3 text-sm font-medium text-gray-600 dark:text-gray-400 group-hover:text-orange-600 dark:group-hover:text-orange-400 truncate">
+                          {project.name}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="pt-3 mt-3 border-t border-gray-200 dark:border-gray-800/50 space-y-1">
                   <motion.button
                     onClick={toggleTheme}
-                    className="w-full flex items-center p-2.5 hover:opacity-80 rounded-lg transition-all"
-                    whileHover={{ x: 4 }}
+                    className="w-full flex items-center p-2.5 rounded-lg transition-all"
                     whileTap={{ scale: 0.98 }}
                   >
                     {theme === 'dark' ? (
@@ -279,23 +326,19 @@ const Sidebar = () => {
                         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
                       </svg>
                     )}
-                    {theme === 'dark' ? (
-                      <span className="ml-3 font-medium text-sm px-3 py-1 rounded-lg bg-amber-400/20 text-amber-700 dark:bg-amber-600/30 dark:text-amber-300">Light Mode</span>
-                    ) : (
-                      <span className="ml-3 font-medium text-sm px-3 py-1 rounded-lg bg-slate-800/80 text-slate-100">Dark Mode</span>
-                    )}
+                    <span className="ml-3 font-medium text-sm text-gray-600 dark:text-gray-400">
+                      {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                    </span>
                   </motion.button>
 
-                  <motion.button
+                  <button
                     onClick={handleLogout}
-                    className="w-full flex items-center p-2.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-all"
-                    whileHover={{ x: 4 }}
-                    whileTap={{ scale: 0.98 }}
+                    className="w-full flex items-center p-2.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all"
                   >
                     <RiLogoutBoxRLine size={20} />
                     <span className="ml-3 font-medium text-sm">Sign Out</span>
-                  </motion.button>
-                </motion.div>
+                  </button>
+                </div>
               </div>
             </motion.div>
           </>

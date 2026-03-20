@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FiClipboard, FiFolder, FiSettings } from 'react-icons/fi'
 import { AiOutlinePlus } from 'react-icons/ai'
@@ -7,9 +7,8 @@ import { RiTeamLine } from 'react-icons/ri'
 import { PiGraphDuotone } from 'react-icons/pi'
 import { MdOutlineManageAccounts } from 'react-icons/md'
 import { motion } from 'framer-motion'
+import PageHeader from '../../components/ui/Header'
 import useProjectStore from '../../stores/projectStore'
-import CreateProject from '../../components/modals/CreateProject'
-import EditProject from '../../components/modals/EditProject'
 
 const colors = [
   'bg-red-400', 'bg-blue-400', 'bg-green-700', 'bg-yellow-600',
@@ -55,9 +54,6 @@ const AdminProjectList = () => {
   const [loading, setLoading] = useState(true)
   const [projectColors, setProjectColors] = useState({})
   const [error, setError] = useState('')
-  const [showModal, setShowModal] = useState(false)
-  const [editModal, showEditModal] = useState(false)
-  const [projectDetails, setProjectDetails] = useState(null)
 
   useEffect(() => {
     fetchAdminProjects().finally(() => setLoading(false))
@@ -88,23 +84,19 @@ const AdminProjectList = () => {
     navigate(`/projects/${projectId}`)
   }
 
-  const handleManagerAssignmentClick = (project) => {
-    setProjectDetails(project)
-    showEditModal(true)
-  }
-
   return (
-    <div className='min-h-screen bg-[#fcfaf8] dark:bg-[#000000] flex flex-col p-4 transition-colors duration-300'>
-      {showModal && <CreateProject setShowModal={setShowModal} />}
-      {editModal && <EditProject project={projectDetails} heading={'Assign a Manager'} setShowModal={showEditModal} />}
-
-      <div className="flex sm:flex-row flex-col sm:justify-between sm:items-center">
-        <div className="flex items-center space-x-2">
-          <FiFolder className="text-2xl text-gray-600 dark:text-gray-400" />
-          <h2 className="text-2xl md:text-3xl text-gray-800 dark:text-white font-bold tracking-tight">Created Projects</h2>
-        </div>
-      </div>
-      <p className='mt-1 text-sm text-gray-500 dark:text-gray-400 lg:ml-8 mb-6'>Manage and administrate your established project ecosystems.</p>
+    <div className='min-h-screen bg-[#fcfaf8] dark:bg-[#000000] flex flex-col  transition-colors duration-300'>
+      <PageHeader
+        icon={FiFolder}
+        title="Created"
+        highlight="Projects"
+        subtitle="Manage and administer all your created projects"
+        action={(
+          <button onClick={() => navigate('/projects/new')} className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-br from-orange-600 to-orange-700 text-white text-sm font-bold rounded-xl shadow-md shadow-orange-600/20 hover:from-orange-500 hover:to-orange-600 transition-all">
+            <AiOutlinePlus className="text-base" /> Create Project
+          </button>
+        )}
+      />
       <div className='h-[1px] bg-gray-200 dark:bg-[#1a1a1a] w-full mb-8'></div>
 
       {error &&
@@ -122,17 +114,17 @@ const AdminProjectList = () => {
             <img src="/Resources/3.png" alt='No projects' className='relative w-64 md:w-80 opacity-80 dark:opacity-40 grayscale' />
           </div>
           <p className="text-lg font-bold text-gray-800 dark:text-white mb-4">You haven't created any Project</p>
-          <button onClick={() => setShowModal(true)} className="px-8 py-3 bg-orange-600 text-white rounded-2xl font-bold shadow-lg shadow-orange-600/20 hover:bg-orange-700 transition-all">
+          <button onClick={() => navigate('/projects/new')} className="px-8 py-3 bg-orange-600 text-white rounded-2xl font-bold shadow-lg shadow-orange-600/20 hover:bg-orange-700 transition-all">
             Create One Now
           </button>
         </div>
       ) : (
         <div className="w-full grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          <div onClick={() => setShowModal(true)} className='cursor-pointer group relative overflow-hidden h-[320px] border-2 border-dashed border-gray-200 dark:border-[#1a1a1a] flex flex-col justify-center items-center bg-white/50 dark:bg-[#0a0a0a]/50 hover:bg-white dark:hover:bg-[#0a0a0a] rounded-2xl transition-all duration-300'>
+          <div onClick={() => navigate('/projects/new')} className='cursor-pointer group relative overflow-hidden h-[320px] border-2 border-dashed border-gray-200 dark:border-[#1a1a1a] flex flex-col justify-center items-center bg-white/50 dark:bg-[#0a0a0a]/50 hover:bg-white dark:hover:bg-[#0a0a0a] rounded-2xl transition-all duration-300'>
             <div className="p-5 bg-orange-50 dark:bg-orange-500/10 rounded-full group-hover:scale-110 transition-transform duration-500">
               <AiOutlinePlus className="text-4xl text-orange-600" />
             </div>
-            <span className='text-sm font-bold mt-4 text-gray-500 dark:text-gray-400 group-hover:text-orange-600 transition-colors'>Establish New Frontier</span>
+            <span className='text-sm font-bold mt-4 text-gray-500 dark:text-gray-400 group-hover:text-orange-600 transition-colors'>Create New Project</span>
           </div>
 
               {adminProjects.map((project) => {
@@ -166,10 +158,10 @@ const AdminProjectList = () => {
                     <h3 className="font-bold text-gray-900 dark:text-zinc-100 text-lg group-hover:text-orange-600 dark:group-hover:text-orange-500 transition-colors duration-300 truncate">
                       {project.name}
                     </h3>
-                    {project.projectManager?.status === 'Pending' && (
+                    {(!project.leads || project.leads.length === 0) && (
                       <div className="inline-flex items-center gap-1 mt-1 text-xs font-semibold text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-950/20 px-2 py-0.5 rounded-md">
                         <span className="w-1 h-1 rounded-full bg-amber-500" />
-                        Manager Approval Pending
+                        No Lead Assigned
                       </div>
                     )}
                   </div>
@@ -181,7 +173,7 @@ const AdminProjectList = () => {
                         <RiTeamLine className="text-base" />
                       </div>
                       <div>
-                        <p className="text-[10px] text-zinc-400 font-medium uppercase tracking-wider">Squad</p>
+                        <p className="text-[10px] text-zinc-400 font-medium uppercase tracking-wider">Team</p>
                         <p className="text-sm font-bold text-zinc-800 dark:text-zinc-200">{project.team?.length || 0}</p>
                       </div>
                     </div>
@@ -191,7 +183,7 @@ const AdminProjectList = () => {
                         <GrTask className="text-base" />
                       </div>
                       <div>
-                        <p className="text-[10px] text-zinc-400 font-medium uppercase tracking-wider">Units</p>
+                        <p className="text-[10px] text-zinc-400 font-medium uppercase tracking-wider">Tasks</p>
                         <p className="text-sm font-bold text-zinc-800 dark:text-zinc-200">{project.tasks?.length || 0}</p>
                       </div>
                     </div>
@@ -216,9 +208,9 @@ const AdminProjectList = () => {
           
                 {/* Footer Interface: Manager Row */}
                 <div className="mt-4">
-                  {project.projectManager?.status === 'Pending' ? (
-                    <button 
-                      onClick={() => handleManagerAssignmentClick(project)} 
+                  {(!project.leads || project.leads.length === 0) ? (
+                    <button
+                      onClick={() => navigate(`/projects/${project._id}/edit`)}
                       className="w-full flex items-center justify-center gap-2 py-2.5 rounded-md bg-orange-600 hover:bg-orange-600 dark:bg-zinc-800 dark:hover:bg-orange-600 text-white transition-all duration-300 text-xs font-bold shadow-md tracking-wide"
                     >
                       <PiGraphDuotone className="text-sm animate-spin-slow" />
@@ -232,7 +224,7 @@ const AdminProjectList = () => {
                         </div>
                         <div className="min-w-0">
                           <p className="text-[9px] uppercase tracking-wider font-extrabold text-orange-600 dark:text-orange-400/80">Project Lead</p>
-                          <p className="text-xs font-bold text-zinc-700 dark:text-zinc-300 truncate">{project.projectManager?.email || 'N/A'}</p>
+                          <p className="text-xs font-bold text-zinc-700 dark:text-zinc-300 truncate">{project.leads?.map((l) => l.email || l).join(', ') || 'N/A'}</p>
                         </div>
                       </div>
                     </div>
