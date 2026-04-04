@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from 'motion/react'
 import {
   FiPlus, FiArrowLeft, FiArrowRight, FiCpu, FiCheckCircle, FiZap,
   FiChevronRight, FiMail, FiCalendar, FiTag, FiLayers, FiEdit2,

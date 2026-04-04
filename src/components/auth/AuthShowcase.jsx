@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import {
   FiCheckSquare, FiBell, FiMessageSquare, FiCalendar,
   FiBarChart2, FiShield, FiUsers,

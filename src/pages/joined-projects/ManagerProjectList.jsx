@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { FaPeopleRoof } from 'react-icons/fa6'
 import { GrTask } from 'react-icons/gr'
 import { RiAdminLine, RiTeamLine } from 'react-icons/ri'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import PageHeader from '../../components/ui/Header'
 import api from '../../utils/api'
 
@@ -52,13 +52,15 @@ const ManagerProjectList = () => {
         ) : error ? (
           <div className="p-4 rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400 font-medium">{error}</div>
         ) : managedProjects.length === 0 ? (
-          <div className='flex flex-col items-center justify-center py-20 bg-white dark:bg-[#0a0a0a] rounded-xl border border-dashed border-gray-200 dark:border-[#1a1a1a] shadow-sm'>
-            <div className="relative mb-8">
-              <div className="absolute inset-0 bg-orange-500/10 blur-3xl rounded-full" />
-              <img src="/Resources/6.png" alt='No projects' className='w-64 grayscale opacity-40 dark:invert brightness-0' />
+          <div className='flex flex-col items-center justify-center text-center px-6 py-16 sm:py-24'>
+            <div className="relative mb-6 sm:mb-8 w-full flex justify-center">
+              <div className="absolute inset-0 bg-orange-500/10 blur-3xl rounded-full " />
+              <img src="/placeholders/manager.svg" alt="No managed projects" className="w-full max-w-88 h-auto mx-auto select-none pointer-events-none" />
             </div>
-            <p className="text-lg font-black text-gray-800 dark:text-white mb-2 uppercase tracking-widest">Authority Void</p>
-            <p className="text-gray-500 dark:text-gray-400 text-center max-w-xs font-medium">You haven't been appointed as a lead for any sectors yet.</p>
+            <h3 className="text-xl sm:text-2xl font-black text-gray-800 dark:text-white mb-2 uppercase tracking-widest">Authority Void</h3>
+            <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 font-medium max-w-md">
+              You haven't been appointed as a lead for any projects yet. Manage one to take command.
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">

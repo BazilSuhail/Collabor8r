@@ -121,3 +121,19 @@ html.dark .glass {
     cursor: url('/pointer.webp'), auto !important;
   }
 }
+
+
+/*   */
+/* index.css */
+.joined-svg {
+  color: #000000; /* default color */
+}
+
+.dark .joined-svg {
+  color: #60A5FA; /* or any color you want in dark mode - blue-400 */
+}
+
+/* Or if you want to use a different approach with fill */
+.joined-svg path {
+  fill: currentColor;
+}

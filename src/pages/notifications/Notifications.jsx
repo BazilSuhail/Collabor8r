@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { FiBell, FiCheck, FiTrash2, FiZap, FiUser, FiFolder, FiShield } from 'react-icons/fi'
 import PageHeader from '../../components/ui/Header'
 import api from '../../utils/api'

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { FiTag, FiPlus, FiEdit2, FiTrash2 } from 'react-icons/fi'
 import ProjectHeader from '../../../components/ui/ProjectHeader'
 import api from '../../../utils/api'
@@ -57,7 +57,7 @@ const Labels = () => {
 
   return (
     <div className="min-h-screen bg-[#fcfaf8] dark:bg-[#000000] pt-4 transition-colors duration-300">
-      <div className="max-w-[1100px] mx-auto">
+      <div className="mx-auto">
         <ProjectHeader
           projectId={projectId}
           icon={FiTag}
@@ -76,7 +76,7 @@ const Labels = () => {
       {showForm && (
         <motion.form initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
           onSubmit={handleSubmit}
-          className="max-w-lg bg-white dark:bg-[#0a0a0a] rounded-xl border border-gray-200 dark:border-[#1a1a1a] p-6 mb-6 flex items-end gap-3"
+          className=" bg-white dark:bg-[#0a0a0a] rounded-xl border border-gray-200 dark:border-[#1a1a1a] p-6 mb-6 flex items-end gap-3"
         >
           <div className="flex-1">
             <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wider">Name</label>
@@ -95,7 +95,7 @@ const Labels = () => {
       )}
 
       {loading ? (
-        <div className="space-y-2 max-w-lg">
+        <div className="space-y-2">
           {[1, 2, 3].map((i) => <div key={i} className="h-16 bg-gray-100 dark:bg-[#151515] rounded-xl animate-pulse" />)}
         </div>
       ) : labels.length === 0 ? (
@@ -105,7 +105,7 @@ const Labels = () => {
           <p className="text-gray-500 dark:text-gray-400 font-medium">Create labels to classify tasks.</p>
         </div>
       ) : (
-        <div className="space-y-2 max-w-lg">
+        <div className="gap-2 grid grid-cols-1 sm:grid-cols-2">
           {labels.map((label) => (
             <div key={label._id} className="flex items-center justify-between p-4 bg-white dark:bg-[#0a0a0a] rounded-xl border border-gray-200 dark:border-[#1a1a1a] hover:border-orange-500/30 transition-all group">
               <div className="flex items-center gap-3">

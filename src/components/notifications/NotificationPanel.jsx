@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from 'motion/react'
 import { FiBell, FiTrash2, FiX, FiZap, FiUser, FiFolder, FiShield, FiRefreshCw, FiUserPlus, FiCheckCircle, FiEye, FiEyeOff } from 'react-icons/fi'
 import { GoHourglass, GoPersonAdd } from 'react-icons/go'
 import useNotificationStore from '../../stores/notificationStore'

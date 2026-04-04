@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { FiCheck, FiArrowRight, FiZap, FiTarget, FiActivity } from 'react-icons/fi';
 
 export default function Pricing() {

@@ -27,7 +27,7 @@ const SidebarLayout = () => {
           sidebarOpen ? 'lg:ml-[260px]' : 'lg:ml-[80px]'
         }`}
       >
-        <div className="p-6">
+        <div className="p-3 sm:p-4 lg:p-5">
           <Outlet />
         </div>
       </main>

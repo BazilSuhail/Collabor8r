@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from 'motion/react'
 import {
   FiPlus, FiArrowLeft, FiArrowRight, FiCpu, FiCheckCircle, FiZap,
   FiChevronRight, FiLayers, FiEdit2, FiUsers, FiLoader, FiTag, FiClock,
@@ -38,10 +38,17 @@ const CreateTask = () => {
 
   const [step, setStep] = useState(0)
   const [mode, setMode] = useState('ai')
+  const [aiMode, setAiMode] = useState('single')
   const [prompt, setPrompt] = useState('')
   const [generating, setGenerating] = useState(false)
   const [aiDraft, setAiDraft] = useState(null)
   const [draft, setDraft] = useState(emptyDraft)
+  const [goal, setGoal] = useState('')
+  const [bulkLoading, setBulkLoading] = useState(false)
+  const [roadmap, setRoadmap] = useState(null)
+  const [suggestedTasks, setSuggestedTasks] = useState([])
+  const [creatingBulk, setCreatingBulk] = useState(false)
+  const [bulkCreated, setBulkCreated] = useState(0)
   const [users, setUsers] = useState([])
   const [sprints, setSprints] = useState([])
   const [labels, setLabels] = useState([])
@@ -113,6 +120,60 @@ const CreateTask = () => {
       setError(err.message || 'Failed to generate task draft')
     } finally {
       setGenerating(false)
+    }
+  }
+
+  const handleGenerateRoadmap = async (e) => {
+    if (e) e.preventDefault()
+    if (!goal.trim()) { setError('Describe your project goal first'); return }
+    setBulkLoading(true)
+    setError('')
+    setSuggestedTasks([])
+    setBulkCreated(0)
+    try {
+      const res = await api('POST', '/ai/roadmap', { projectId, goal: goal.trim() })
+      if (res.error) throw new Error(res.error?.error || 'Failed to generate roadmap')
+      setRoadmap(res.data?.roadmap || null)
+    } catch (err) {
+      setError(err.message || 'Failed to generate roadmap')
+    } finally {
+      setBulkLoading(false)
+    }
+  }
+
+  const handleSuggestTasks = async () => {
+    setBulkLoading(true)
+    setError('')
+    try {
+      const res = await api('POST', '/ai/suggest-tasks', {
+        projectId,
+        roadmap: roadmap || undefined,
+        prompt: goal.trim() || undefined,
+      })
+      if (res.error) throw new Error(res.error?.error || 'Failed to suggest tasks')
+      setSuggestedTasks(res.data?.tasks || [])
+    } catch (err) {
+      setError(err.message || 'Failed to suggest tasks')
+    } finally {
+      setBulkLoading(false)
+    }
+  }
+
+  const handleCreateAll = async () => {
+    if (!suggestedTasks.length) return
+    setCreatingBulk(true)
+    setError('')
+    try {
+      const res = await api('POST', '/ai/create-tasks', { projectId, tasks: suggestedTasks })
+      if (res.error) throw new Error(res.error?.error || 'Failed to create tasks')
+      setBulkCreated(res.data?.count || suggestedTasks.length)
+      setSuggestedTasks([])
+      setRoadmap(null)
+      setGoal('')
+    } catch (err) {
+      setError(err.message || 'Failed to create tasks')
+    } finally {
+      setCreatingBulk(false)
     }
   }
 
@@ -280,18 +341,22 @@ const CreateTask = () => {
                     <h3 className="text-sm font-bold uppercase tracking-wide">Create Your Task</h3>
                   </div>
                   <div className="flex items-center gap-2 w-full sm:w-auto">
-                    <button type="button" onClick={() => { setMode('ai'); setError('') }}
-                      className={`flex-1 sm:flex-none px-4 py-2 rounded-xl text-sm font-bold transition-all ${mode === 'ai' ? 'bg-gradient-to-br from-orange-600 to-orange-700 text-white shadow-md' : 'bg-gray-100 dark:bg-[#151515] text-gray-600 dark:text-gray-300 hover:bg-orange-50 dark:hover:bg-orange-500/10'}`}>
+                    <button type="button" onClick={() => { setMode('ai'); setAiMode('single'); setError('') }}
+                      className={`flex-1 sm:flex-none px-4 py-2 rounded-xl text-sm font-bold transition-all ${mode === 'ai' && aiMode === 'single' ? 'bg-gradient-to-br from-orange-600 to-orange-700 text-white shadow-md' : 'bg-gray-100 dark:bg-[#151515] text-gray-600 dark:text-gray-300 hover:bg-orange-50 dark:hover:bg-orange-500/10'}`}>
                       <FiCpu className="inline mr-1.5" size={14} /> AI Draft
                     </button>
                     <button type="button" onClick={() => { setMode('manual'); setError('') }}
                       className={`flex-1 sm:flex-none px-4 py-2 rounded-xl text-sm font-bold transition-all ${mode === 'manual' ? 'bg-gradient-to-br from-orange-600 to-orange-700 text-white shadow-md' : 'bg-gray-100 dark:bg-[#151515] text-gray-600 dark:text-gray-300 hover:bg-orange-50 dark:hover:bg-orange-500/10'}`}>
                       <FiEdit2 className="inline mr-1.5" size={14} /> Manual
                     </button>
+                    <button type="button" onClick={() => { setMode('ai'); setAiMode('bulk'); setError('') }}
+                      className={`flex-1 sm:flex-none px-4 py-2 rounded-xl text-sm font-bold transition-all ${mode === 'ai' && aiMode === 'bulk' ? 'bg-gradient-to-br from-orange-600 to-orange-700 text-white shadow-md' : 'bg-gray-100 dark:bg-[#151515] text-gray-600 dark:text-gray-300 hover:bg-orange-50 dark:hover:bg-orange-500/10'}`}>
+                      <FiLayers className="inline mr-1.5" size={14} /> AI Generator
+                    </button>
                   </div>
                 </div>
 
-                {mode === 'ai' && (
+                {mode === 'ai' && aiMode === 'single' && (
                   <>
                     <div className="bg-gray-50 dark:bg-[#151515] rounded-2xl p-5 space-y-4">
                       <div className="flex items-start gap-3">
@@ -346,6 +411,104 @@ const CreateTask = () => {
                       </div>
                     )}
                   </>
+                )}
+
+                {mode === 'ai' && aiMode === 'bulk' && (
+                  <div className="bg-gray-50 dark:bg-[#151515] rounded-2xl p-5 space-y-4">
+                    {/* Assistant welcome */}
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-600 to-amber-500 text-white flex items-center justify-center shrink-0"><FiZap size={14} /></div>
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                          Describe your project <span className="font-bold text-gray-900 dark:text-white">goal</span> and I'll build a
+                          multi-phase <span className="text-orange-600 dark:text-orange-400 font-medium">roadmap</span>, then suggest
+                          concrete tasks you can create all at once.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Goal input */}
+                    <div className="flex gap-2">
+                      <input value={goal} onChange={(e) => setGoal(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleGenerateRoadmap(e) }}
+                        placeholder="e.g. Build a marketing site with blog, SEO and analytics..."
+                        className="flex-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-[#1a1a1a] bg-white dark:bg-[#000] text-gray-900 dark:text-white placeholder-gray-400 font-medium focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition"
+                      />
+                      <button type="button" onClick={handleGenerateRoadmap} disabled={bulkLoading}
+                        className="px-5 py-3 rounded-xl bg-gradient-to-br from-orange-600 to-orange-700 text-white font-bold hover:from-orange-500 hover:to-orange-600 disabled:opacity-50 transition-all shadow-md whitespace-nowrap">
+                        {bulkLoading ? <FiLoader className="animate-spin inline" size={15} /> : <><FiLayers className="inline mr-1" size={14} /> Roadmap</>}
+                      </button>
+                    </div>
+
+                    {/* Roadmap result */}
+                    {roadmap && (
+                      <div className="rounded-xl border border-orange-500/30 bg-white dark:bg-[#000] p-4 space-y-3">
+                        <p className="text-xs font-bold uppercase tracking-wider text-orange-600 flex items-center gap-1.5"><FiLayers /> Delivery Roadmap</p>
+                        {roadmap.summary && (
+                          <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{roadmap.summary}</p>
+                        )}
+                        {roadmap.phases?.map((phase, i) => (
+                          <div key={i} className="border border-gray-200 dark:border-[#1a1a1a] rounded-xl p-3">
+                            <p className="text-sm font-bold text-gray-800 dark:text-gray-100">{i + 1}. {phase.name}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{phase.description}</p>
+                            <p className="text-[10px] text-gray-400 mt-1.5 font-semibold">{phase.tasks?.length || 0} tasks in this phase</p>
+                          </div>
+                        ))}
+                        <button type="button" onClick={handleSuggestTasks} disabled={bulkLoading}
+                          className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-gradient-to-br from-orange-600 to-orange-700 text-white font-bold hover:from-orange-500 hover:to-orange-600 disabled:opacity-50 transition-all shadow-md">
+                          {bulkLoading ? <FiLoader className="animate-spin" size={15} /> : <><FiZap size={15} /> Suggest Concrete Tasks</>}
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Suggested tasks */}
+                    {suggestedTasks.length > 0 && (
+                      <div className="rounded-xl border border-orange-500/30 bg-white dark:bg-[#000] p-4 space-y-3">
+                        <p className="text-xs font-bold uppercase tracking-wider text-orange-600 flex items-center gap-1.5">
+                          <FiCheckCircle /> {suggestedTasks.length} Task{suggestedTasks.length === 1 ? '' : 's'} Ready to Create
+                        </p>
+                        <ul className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                          {suggestedTasks.map((t, i) => (
+                            <li key={i} className="border border-gray-100 dark:border-[#1a1a1a] rounded-xl p-3">
+                              <p className="text-sm font-bold text-gray-800 dark:text-gray-100">{t.title}</p>
+                              {t.description && (
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">{t.description}</p>
+                              )}
+                              <div className="flex flex-wrap gap-1.5 mt-2">
+                                <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${
+                                  t.priority === 'High' ? 'bg-red-100 dark:bg-red-900/30 text-red-600' :
+                                  t.priority === 'Medium' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600' :
+                                  'bg-green-100 dark:bg-green-900/30 text-green-600'
+                                }`}>{t.priority}</span>
+                                {Number(t.estimateHours) > 0 && (
+                                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-[#151515] text-gray-500 dark:text-gray-400 font-bold">{t.estimateHours}h</span>
+                                )}
+                                {t.suggestedAssignee && (
+                                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400 font-bold">👤 {t.suggestedAssignee}</span>
+                                )}
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                        <button type="button" onClick={handleCreateAll} disabled={creatingBulk}
+                          className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-gradient-to-br from-green-600 to-emerald-600 text-white font-bold hover:from-green-500 hover:to-emerald-500 disabled:opacity-50 transition-all shadow-md">
+                          {creatingBulk ? <FiLoader className="animate-spin" size={15} /> : <FiCheckCircle size={15} />}
+                          {creatingBulk ? 'Creating tasks...' : `Create All ${suggestedTasks.length} Task${suggestedTasks.length === 1 ? '' : 's'}`}
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Success */}
+                    {bulkCreated > 0 && (
+                      <div className="rounded-xl border border-green-500/30 bg-green-50 dark:bg-green-500/10 p-4 text-center space-y-2">
+                        <p className="text-sm font-bold text-green-600 dark:text-green-400">🎉 {bulkCreated} task{bulkCreated === 1 ? '' : 's'} created successfully!</p>
+                        <button type="button" onClick={() => navigate(`/projects/${projectId}/manage`)}
+                          className="text-xs font-bold text-orange-600 hover:text-orange-700 transition-all">
+                          View task board →
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 )}
 
                 {mode === 'manual' && (
@@ -604,7 +767,7 @@ const CreateTask = () => {
               </button>
             </div>
 
-            {step < STEPS.length - 1 ? (
+            {step === 0 && mode === 'ai' && aiMode === 'bulk' ? null : step < STEPS.length - 1 ? (
               <button type="button" onClick={next} disabled={step === 0 && mode === 'ai' && generating}
                 className="flex items-center gap-2 px-8 py-3 rounded-xl bg-gradient-to-br from-orange-600 to-orange-700 text-white font-bold hover:from-orange-500 hover:to-orange-600 disabled:opacity-50 transition-all shadow-md">
                 Continue <FiArrowRight size={16} />

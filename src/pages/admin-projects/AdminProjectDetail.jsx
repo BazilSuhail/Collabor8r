@@ -22,7 +22,7 @@ import {
   FiArrowRight 
 } from 'react-icons/fi'
 import { GoLink } from 'react-icons/go'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import api from '../../utils/api'
 import useProjectStore from '../../stores/projectStore'
 

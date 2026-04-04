@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { FiZap, FiPlus, FiTrash2, FiEdit2, FiSave, FiPlay } from 'react-icons/fi'
 import ProjectHeader from '../../../components/ui/ProjectHeader'
 import api from '../../../utils/api'

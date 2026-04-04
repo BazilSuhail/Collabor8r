@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 
 const PageHeader = ({ 
   icon: Icon, 
@@ -18,19 +18,7 @@ const PageHeader = ({
       {/* FULL-WIDTH SPREAD: SHARP BORDERED INNER SVGs */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
         
-        {/* 1. FAR LEFT: Solid Triangle with Heavy Sharp Outline */}
-        <motion.svg 
-          animate={{ y: [-6, 6, -6], rotate: [-4, 4, -4] }}
-          transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -top-10 -left-10 w-48 h-48 lg:w-60 lg:h-60 text-orange-500/10 dark:text-orange-500/15" 
-          viewBox="0 0 200 200" 
-          fill="currentColor"
-          stroke="currentColor"
-          strokeWidth="6"
-        >
-          <polygon points="100,10 190,170 10,170" />
-        </motion.svg>
- 
+        
 
         {/* 3. CENTER: Sharp Outline 4-Point Starburst */}
         <motion.svg 

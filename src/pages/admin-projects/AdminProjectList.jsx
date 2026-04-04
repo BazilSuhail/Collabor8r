@@ -1,50 +1,59 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FiClipboard, FiFolder, FiSettings } from 'react-icons/fi'
+import { 
+  FiClipboard, FiFolder, FiSettings, FiLink, FiTag, FiEye, FiUser, 
+  FiTrendingUp, FiUsers, FiCheckCircle, FiLayers 
+} from 'react-icons/fi'
 import { AiOutlinePlus } from 'react-icons/ai'
 import { GrTask } from 'react-icons/gr'
 import { RiTeamLine } from 'react-icons/ri'
 import { PiGraphDuotone } from 'react-icons/pi'
 import { MdOutlineManageAccounts } from 'react-icons/md'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'motion/react'
 import PageHeader from '../../components/ui/Header'
 import useProjectStore from '../../stores/projectStore'
 
 const colors = [
-  'bg-red-400', 'bg-blue-400', 'bg-green-700', 'bg-yellow-600',
-  'bg-indigo-400', 'bg-orange-400', 'bg-cyan-400', 'bg-violet-400',
+  'from-rose-500 to-pink-600',
+  'from-blue-500 to-indigo-600',
+  'from-emerald-500 to-teal-600',
+  'from-amber-500 to-orange-600',
+  'from-violet-500 to-[#0d0d0d]',
+  'from-cyan-500 to-blue-600',
 ]
 
 const getRandomColor = () => colors[Math.floor(Math.random() * colors.length)]
 
 const SkeletonCard = () => (
-  <div className="h-[320px] bg-white dark:bg-[#0a0a0a] border border-gray-100 dark:border-[#1a1a1a] rounded-2xl overflow-hidden animate-pulse">
-    <div className="p-4 bg-gray-50 dark:bg-[#151515] border-b border-gray-100 dark:border-[#1a1a1a] flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gray-200 dark:bg-gray-800" />
-        <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-28" />
-      </div>
-      <div className="h-6 w-16 bg-gray-200 dark:bg-gray-800 rounded-full" />
-    </div>
-    <div className="p-5 space-y-4">
-      <div className="flex items-center gap-3">
-        <div className="w-5 h-5 rounded bg-gray-200 dark:bg-gray-800" />
-        <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-24" />
-        <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-8" />
-      </div>
-      <div className="flex items-center gap-3">
-        <div className="w-5 h-5 rounded bg-gray-200 dark:bg-gray-800" />
-        <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-28" />
-        <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-8" />
-      </div>
-      <div className="pt-3 border-t border-gray-100 dark:border-[#1a1a1a] space-y-2">
-        <div className="h-10 bg-gray-200 dark:bg-gray-800 rounded-xl" />
-        <div className="h-10 bg-gray-200 dark:bg-gray-800 rounded-xl" />
+  <div className="bg-white dark:bg-[#0a0a0a] border border-gray-100 dark:border-[#1a1a1a] rounded-2xl overflow-hidden animate-pulse p-5 flex flex-col gap-4">
+    <div className="flex items-center gap-3">
+      <div className="w-11 h-11 rounded-2xl bg-gray-200 dark:bg-gray-800 shrink-0" />
+      <div className="space-y-2 flex-1">
+        <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-3/4" />
+        <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-1/2" />
       </div>
     </div>
-    <div className="px-5 pb-5">
-      <div className="h-12 bg-gray-200 dark:bg-gray-800 rounded-xl" />
+    <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-full" />
+    <div className="grid grid-cols-2 gap-2.5">
+      <div className="h-16 bg-gray-200 dark:bg-gray-800 rounded-xl" />
+      <div className="h-16 bg-gray-200 dark:bg-gray-800 rounded-xl" />
+      <div className="h-16 bg-gray-200 dark:bg-gray-800 rounded-xl" />
+      <div className="h-16 bg-gray-200 dark:bg-gray-800 rounded-xl" />
     </div>
+  </div>
+)
+
+const SkeletonStats = () => (
+  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+    {[1, 2, 3, 4].map((i) => (
+      <div key={i} className="p-4 bg-white dark:bg-[#0a0a0a] border border-gray-200/80 dark:border-[#1a1a1a] rounded-2xl flex items-center gap-3 animate-pulse">
+        <div className="w-11 h-11 rounded-xl bg-gray-200 dark:bg-gray-800" />
+        <div className="space-y-2 flex-1">
+          <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-1/2" />
+          <div className="h-5 bg-gray-200 dark:bg-gray-800 rounded w-2/3" />
+        </div>
+      </div>
+    ))}
   </div>
 )
 
@@ -61,19 +70,27 @@ const AdminProjectList = () => {
 
   useEffect(() => {
     if (!adminProjects.length) return
-    const colorMapping = {}
-    adminProjects.forEach((project) => {
-      if (!colorMapping[project._id]) colorMapping[project._id] = getRandomColor()
+    setProjectColors((prev) => {
+      const colorMapping = { ...prev }
+      adminProjects.forEach((project) => {
+        if (!colorMapping[project._id]) {
+          colorMapping[project._id] = getRandomColor()
+        }
+      })
+      return colorMapping
     })
-    setProjectColors((prev) => ({ ...prev, ...colorMapping }))
   }, [adminProjects])
 
-  useEffect(() => {
-    const colorMapping = {}
-    adminProjects.forEach((project) => {
-      colorMapping[project._id] = getRandomColor()
-    })
-    setProjectColors(colorMapping)
+  // Calculated Metrics
+  const metrics = useMemo(() => {
+    const total = adminProjects.length
+    const active = adminProjects.filter((p) => (p.status || 'active').toLowerCase() === 'active').length
+    const totalMembers = adminProjects.reduce((acc, p) => acc + (p.teamCount ?? p.team?.length ?? 0), 0)
+    const avgCompletion = total > 0 
+      ? Math.round(adminProjects.reduce((acc, p) => acc + (p.stats?.avgProgress || 0), 0) / total) 
+      : 0
+
+    return { total, active, totalMembers, avgCompletion }
   }, [adminProjects])
 
   const handleTaskManagement = (projectId) => {
@@ -85,154 +102,308 @@ const AdminProjectList = () => {
   }
 
   return (
-    <div className='min-h-screen bg-[#fcfaf8] dark:bg-[#000000] flex flex-col  transition-colors duration-300'>
+    <div className="min-h-screen bg-[#fcfaf8] dark:bg-[#000000] flex flex-col transition-colors duration-300 pb-16">
       <PageHeader
         icon={FiFolder}
         title="Created"
         highlight="Projects"
         subtitle="Manage and administer all your created projects"
-        action={(
-          <button onClick={() => navigate('/projects/new')} className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-br from-orange-600 to-orange-700 text-white text-sm font-bold rounded-xl shadow-md shadow-orange-600/20 hover:from-orange-500 hover:to-orange-600 transition-all">
+        action={
+          <button
+            onClick={() => navigate('/projects/new')}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-br from-orange-600 to-orange-700 text-white text-sm font-bold rounded-xl shadow-lg shadow-orange-600/20 hover:from-orange-500 hover:to-orange-600 active:scale-[0.98] transition-all"
+          >
             <AiOutlinePlus className="text-base" /> Create Project
           </button>
-        )}
+        }
       />
-      <div className='h-[1px] bg-gray-200 dark:bg-[#1a1a1a] w-full mb-8'></div>
 
-      {error &&
-        <div className='p-4 bg-red-100 dark:bg-red-900/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20 rounded-xl mb-6'>{error}</div>
-      }
+      <div className="h-[1px] bg-gray-200 dark:bg-[#1a1a1a] w-full mb-6" />
 
+      {error && (
+        <div className="p-4 bg-red-100 dark:bg-red-900/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20 rounded-xl mb-6">
+          {error}
+        </div>
+      )}
+
+      {/* Top Quick Overview Stats Banner */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {[1, 2, 3, 4, 5, 6].map((i) => <SkeletonCard key={i} />)}
+        <SkeletonStats />
+      ) : adminProjects.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6"
+        >
+          <div className="p-4 bg-white dark:bg-[#0a0a0a] border border-gray-200/80 dark:border-[#1a1a1a] rounded-2xl flex items-center gap-3">
+            <div className="p-2.5 bg-orange-500/10 text-orange-600 dark:text-orange-400 rounded-xl">
+              <FiLayers size={20} />
+            </div>
+            <div>
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Managed</p>
+              <h4 className="text-xl font-black text-gray-900 dark:text-white">{metrics.total}</h4>
+            </div>
+          </div>
+
+          <div className="p-4 bg-white dark:bg-[#0a0a0a] border border-gray-200/80 dark:border-[#1a1a1a] rounded-2xl flex items-center gap-3">
+            <div className="p-2.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl">
+              <FiCheckCircle size={20} />
+            </div>
+            <div>
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Active</p>
+              <h4 className="text-xl font-black text-gray-900 dark:text-white">{metrics.active}</h4>
+            </div>
+          </div>
+
+          <div className="p-4 bg-white dark:bg-[#0a0a0a] border border-gray-200/80 dark:border-[#1a1a1a] rounded-2xl flex items-center gap-3">
+            <div className="p-2.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl">
+              <FiUsers size={20} />
+            </div>
+            <div>
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Team Pool</p>
+              <h4 className="text-xl font-black text-gray-900 dark:text-white">{metrics.totalMembers}</h4>
+            </div>
+          </div>
+
+          <div className="p-4 bg-white dark:bg-[#0a0a0a] border border-gray-200/80 dark:border-[#1a1a1a] rounded-2xl flex items-center gap-3">
+            <div className="p-2.5 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-xl">
+              <FiTrendingUp size={20} />
+            </div>
+            <div className="flex-1">
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Avg Progress</p>
+              <h4 className="text-xl font-black text-gray-900 dark:text-white">{metrics.avgCompletion}%</h4>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Main List Area */}
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <SkeletonCard key={i} />
+          ))}
         </div>
       ) : adminProjects.length === 0 ? (
-        <div className='flex flex-col items-center justify-center py-20'>
-          <div className="relative mb-8">
+        <div className="flex flex-col items-center justify-center text-center px-6 py-16 sm:py-24 bg-white dark:bg-[#0a0a0a] border border-gray-200/80 dark:border-[#1a1a1a] rounded-3xl">
+          <div className="relative mb-6 sm:mb-8 w-full flex justify-center">
             <div className="absolute inset-0 bg-orange-500/10 blur-3xl rounded-full" />
-            <img src="/Resources/3.png" alt='No projects' className='relative w-64 md:w-80 opacity-80 dark:opacity-40 grayscale' />
+            <img
+              src="/placeholders/admin.svg"
+              alt="No projects"
+              className="w-full max-w-64 h-auto mx-auto select-none pointer-events-none"
+            />
           </div>
-          <p className="text-lg font-bold text-gray-800 dark:text-white mb-4">You haven't created any Project</p>
-          <button onClick={() => navigate('/projects/new')} className="px-8 py-3 bg-orange-600 text-white rounded-2xl font-bold shadow-lg shadow-orange-600/20 hover:bg-orange-700 transition-all">
-            Create One Now
+          <h3 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white mb-2">
+            No Projects Created Yet
+          </h3>
+          <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 max-w-md mb-8">
+            You haven't created any projects. Start one now and bring your team together.
+          </p>
+          <button
+            onClick={() => navigate('/projects/new')}
+            className="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-br from-orange-600 to-orange-700 text-white text-sm font-bold rounded-2xl shadow-lg shadow-orange-600/20 hover:from-orange-500 hover:to-orange-600 transition-all"
+          >
+            <AiOutlinePlus className="text-base" /> Create Project
           </button>
         </div>
       ) : (
-        <div className="w-full grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          <div onClick={() => navigate('/projects/new')} className='cursor-pointer group relative overflow-hidden h-[320px] border-2 border-dashed border-gray-200 dark:border-[#1a1a1a] flex flex-col justify-center items-center bg-white/50 dark:bg-[#0a0a0a]/50 hover:bg-white dark:hover:bg-[#0a0a0a] rounded-2xl transition-all duration-300'>
-            <div className="p-5 bg-orange-50 dark:bg-orange-500/10 rounded-full group-hover:scale-110 transition-transform duration-500">
-              <AiOutlinePlus className="text-4xl text-orange-600" />
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+          {/* Quick Create Card */}
+          <div
+            onClick={() => navigate('/projects/new')}
+            className="cursor-pointer group relative overflow-hidden min-h-[280px] border-2 border-dashed border-gray-200 dark:border-[#1a1a1a] flex flex-col justify-center items-center bg-white/40 dark:bg-[#0a0a0a]/40 hover:bg-white dark:hover:bg-[#0a0a0a] rounded-2xl transition-all duration-300"
+          >
+            <div className="p-4 bg-orange-50 dark:bg-orange-500/10 rounded-full group-hover:scale-110 transition-transform duration-300">
+              <AiOutlinePlus className="text-2xl text-orange-600" />
             </div>
-            <span className='text-sm font-bold mt-4 text-gray-500 dark:text-gray-400 group-hover:text-orange-600 transition-colors'>Create New Project</span>
+            <span className="text-sm font-bold mt-3 text-gray-500 dark:text-gray-400 group-hover:text-orange-600 transition-colors">
+              Create New Project
+            </span>
           </div>
 
-              {adminProjects.map((project) => {
-            const projectColor = projectColors[project._id] || 'bg-gray-400';
-            
-            return (
-              <motion.div
-                key={project._id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                whileHover={{ y: -6 }}
-                className="group relative h-[340px] bg-white dark:bg-[#09090b] border border-gray-100 dark:border-[#1e1e24] rounded-2xl overflow-hidden p-5 flex flex-col justify-between transition-all duration-300 hover:border-orange-500/30 hover:shadow-2xl hover:shadow-orange-500/5"
-              >
-                {/* Dynamic Glow Effect on Hover */}
-                <div className="absolute -right-12 -top-12 w-32 h-32 bg-gradient-to-br from-orange-500/10 to-transparent rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-          
-                <div>
-                  {/* Header: Identity & Status */}
-                  <div className="flex items-start justify-between mb-4">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg text-white shadow-md shadow-black/5 ${projectColor}`}>
-                      {project.name?.charAt(0).toUpperCase()}
+          <AnimatePresence>
+            {adminProjects.map((project) => {
+              const projectGradient = projectColors[project._id] || 'from-gray-500 to-gray-700'
+              const stats = project.stats || {}
+              const progress = stats.avgProgress || 0
+              const lead = project.leads?.[0]
+
+              return (
+                <motion.div
+                  key={project._id}
+                  layout
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  whileHover={{ y: -5 }}
+                  onClick={() => handleProjectClick(project._id)}
+                  className="group relative cursor-pointer bg-white dark:bg-[#0a0a0a] border border-gray-200/80 dark:border-[#1a1a1a] rounded-2xl p-5 flex flex-col gap-4 transition-all duration-300 hover:border-orange-500/40 hover:shadow-xl hover:shadow-orange-500/5"
+                >
+                  {/* Header: Identity + Status */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div
+                        className={`w-11 h-11 rounded-2xl flex items-center justify-center font-extrabold text-base text-white shadow-md bg-gradient-to-br ${projectGradient} shrink-0 group-hover:scale-105 transition-transform duration-300`}
+                      >
+                        {project.name?.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="font-bold text-gray-900 dark:text-white text-sm truncate group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
+                          {project.name}
+                        </h3>
+                        <p className="text-[11px] text-gray-400 flex items-center gap-1 mt-0.5 truncate">
+                          <FiUser size={11} className="shrink-0" /> {project.createdBy?.name || 'Unknown Owner'}
+                        </p>
+                      </div>
                     </div>
-                    <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-widest bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/30">
+                    <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      Active
+                      {project.status || 'active'}
                     </span>
                   </div>
-          
-                  {/* Project Name & Info */}
-                  <div className="mb-4">
-                    <h3 className="font-bold text-gray-900 dark:text-zinc-100 text-lg group-hover:text-orange-600 dark:group-hover:text-orange-500 transition-colors duration-300 truncate">
-                      {project.name}
-                    </h3>
-                    {(!project.leads || project.leads.length === 0) && (
-                      <div className="inline-flex items-center gap-1 mt-1 text-xs font-semibold text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-950/20 px-2 py-0.5 rounded-md">
-                        <span className="w-1 h-1 rounded-full bg-amber-500" />
-                        No Lead Assigned
-                      </div>
+
+                  {/* Description */}
+                  {project.description && (
+                    <p className="text-xs leading-relaxed text-gray-500 dark:text-gray-400 line-clamp-2">
+                      {project.description}
+                    </p>
+                  )}
+
+                  {/* Attribute Chips */}
+                  <div className="flex flex-wrap gap-1.5">
+                    <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold capitalize bg-gray-100 dark:bg-gray-800/60 text-gray-600 dark:text-gray-300">
+                      <FiEye size={10} /> {project.visibility || 'private'}
+                    </span>
+                    {project.category && (
+                      <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold capitalize bg-gray-100 dark:bg-gray-800/60 text-gray-600 dark:text-gray-300">
+                        <FiTag size={10} /> {project.category}
+                      </span>
                     )}
+                    {project.links?.length > 0 && (
+                      <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-gray-100 dark:bg-gray-800/60 text-gray-600 dark:text-gray-300">
+                        <FiLink size={10} /> {project.links.length} links
+                      </span>
+                    )}
+                    {project.tags?.slice(0, 2).map((t) => (
+                      <span
+                        key={t}
+                        className="px-2.5 py-0.5 rounded-full bg-orange-500/10 text-[10px] font-bold text-orange-600 dark:text-orange-400"
+                      >
+                        #{t}
+                      </span>
+                    ))}
                   </div>
-          
-                  {/* 2x2 Clean Metrics Grid */}
-                  <div className="grid grid-cols-2 gap-3 mb-4">
-                    <div className="bg-zinc-50 dark:bg-[#121214] border border-zinc-100 dark:border-[#1f1f23] rounded-xl p-2.5 flex items-center gap-2.5">
-                      <div className="p-1.5 bg-white dark:bg-zinc-800 rounded-lg text-orange-500 shadow-sm">
+
+                  {/* 2x2 Metrics Grid */}
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div className="bg-gray-50 dark:bg-[#121214] border border-gray-100 dark:border-[#1f1f23] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                      <div className="p-1.5 bg-white dark:bg-gray-800 rounded-lg text-orange-500 shadow-sm">
                         <RiTeamLine className="text-base" />
                       </div>
                       <div>
-                        <p className="text-[10px] text-zinc-400 font-medium uppercase tracking-wider">Team</p>
-                        <p className="text-sm font-bold text-zinc-800 dark:text-zinc-200">{project.team?.length || 0}</p>
+                        <p className="text-[9px] text-gray-400 font-medium uppercase tracking-wider">Team</p>
+                        <p className="text-sm font-bold text-gray-800 dark:text-gray-200 leading-none mt-0.5">
+                          {project.teamCount ?? project.team?.length ?? 0}
+                        </p>
                       </div>
                     </div>
-          
-                    <div className="bg-zinc-50 dark:bg-[#121214] border border-zinc-100 dark:border-[#1f1f23] rounded-xl p-2.5 flex items-center gap-2.5">
-                      <div className="p-1.5 bg-white dark:bg-zinc-800 rounded-lg text-orange-500 shadow-sm">
+
+                    <div className="bg-gray-50 dark:bg-[#121214] border border-gray-100 dark:border-[#1f1f23] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                      <div className="p-1.5 bg-white dark:bg-gray-800 rounded-lg text-orange-500 shadow-sm">
                         <GrTask className="text-base" />
                       </div>
                       <div>
-                        <p className="text-[10px] text-zinc-400 font-medium uppercase tracking-wider">Tasks</p>
-                        <p className="text-sm font-bold text-zinc-800 dark:text-zinc-200">{project.tasks?.length || 0}</p>
+                        <p className="text-[9px] text-gray-400 font-medium uppercase tracking-wider">Tasks</p>
+                        <p className="text-sm font-bold text-gray-800 dark:text-gray-200 leading-none mt-0.5">
+                          {project.taskCount ?? project.tasks?.length ?? 0}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="bg-gray-50 dark:bg-[#121214] border border-gray-100 dark:border-[#1f1f23] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                      <div className="p-1.5 bg-white dark:bg-gray-800 rounded-lg text-orange-500 shadow-sm">
+                        <MdOutlineManageAccounts className="text-base" />
+                      </div>
+                      <div>
+                        <p className="text-[9px] text-gray-400 font-medium uppercase tracking-wider">Leads</p>
+                        <p className="text-sm font-bold text-gray-800 dark:text-gray-200 leading-none mt-0.5">
+                          {project.leads?.length || 0}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="bg-gray-50 dark:bg-[#121214] border border-gray-100 dark:border-[#1f1f23] rounded-xl px-3 py-2.5">
+                      <div className="flex items-center justify-between">
+                        <p className="text-[9px] text-gray-400 font-medium uppercase tracking-wider">Progress</p>
+                        <span className="text-xs font-extrabold text-orange-600 dark:text-orange-400">{progress}%</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-gray-200 dark:bg-gray-700/60 overflow-hidden mt-2">
+                        <motion.div
+                          className="h-full rounded-full bg-gradient-to-r from-orange-500 to-amber-500"
+                          initial={{ width: 0 }}
+                          animate={{ width: `${Math.min(progress, 100)}%` }}
+                          transition={{ duration: 0.8, ease: 'easeOut' }}
+                        />
                       </div>
                     </div>
                   </div>
-          
-                  {/* Action Quick-Links */}
-                  <div className="flex gap-2 pt-1 border-t border-dashed border-zinc-100 dark:border-zinc-800/60">
-                    <button 
-                      onClick={() => handleProjectClick(project._id)} 
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2 px-1 rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900 hover:text-zinc-900 dark:hover:text-white transition-all text-xs font-semibold border border-transparent hover:border-zinc-200 dark:hover:border-zinc-800"
-                    >
-                      <FiSettings className="text-xs" /> Settings
-                    </button>
-                    <button 
-                      onClick={() => handleTaskManagement(project._id)} 
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2 px-1 rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900 hover:text-zinc-900 dark:hover:text-white transition-all text-xs font-semibold border border-transparent hover:border-zinc-200 dark:hover:border-zinc-800"
-                    >
-                      <FiClipboard className="text-xs" />Manage Tasks
-                    </button>
-                  </div>
-                </div>
-          
-                {/* Footer Interface: Manager Row */}
-                <div className="mt-4">
-                  {(!project.leads || project.leads.length === 0) ? (
-                    <button
-                      onClick={() => navigate(`/projects/${project._id}/edit`)}
-                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-md bg-orange-600 hover:bg-orange-600 dark:bg-zinc-800 dark:hover:bg-orange-600 text-white transition-all duration-300 text-xs font-bold shadow-md tracking-wide"
-                    >
-                      <PiGraphDuotone className="text-sm animate-spin-slow" />
-                      Appoint Lead
-                    </button>
-                  ) : (
-                    <div className="flex items-center justify-between p-2.5 rounded-xl bg-orange-50/40 dark:bg-orange-500/5 border border-orange-100/40 dark:border-orange-500/10">
+
+                  {/* Footer: Lead + Actions */}
+                  <div className="mt-auto pt-3 border-t border-dashed border-gray-100 dark:border-gray-800/60 flex items-center justify-between gap-2">
+                    {lead ? (
                       <div className="flex items-center gap-2 min-w-0">
-                        <div className="w-7 h-7 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-600 dark:text-orange-400 shrink-0">
-                          <MdOutlineManageAccounts className="text-base" />
+                        <div className="w-7 h-7 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-600 dark:text-orange-400 shrink-0 border border-orange-500/20">
+                          <MdOutlineManageAccounts className="text-sm" />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-[9px] uppercase tracking-wider font-extrabold text-orange-600 dark:text-orange-400/80">Project Lead</p>
-                          <p className="text-xs font-bold text-zinc-700 dark:text-zinc-300 truncate">{project.leads?.map((l) => l.email || l).join(', ') || 'N/A'}</p>
+                          <p className="text-[8px] uppercase tracking-wider font-black text-orange-600 dark:text-orange-400">
+                            Lead
+                          </p>
+                          <p className="text-[11px] font-bold text-gray-800 dark:text-gray-200 truncate max-w-[130px]">
+                            {lead.name || lead.email || lead}
+                          </p>
                         </div>
                       </div>
+                    ) : (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          navigate(`/projects/${project._id}/edit`)
+                        }}
+                        className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 dark:text-orange-400 transition-all text-[11px] font-bold border border-orange-500/20"
+                      >
+                        <PiGraphDuotone className="text-sm" /> Appoint Lead
+                      </button>
+                    )}
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleTaskManagement(project._id)
+                        }}
+                        className="p-2 rounded-lg text-gray-400 hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-gray-800 transition-all"
+                        title="Manage Tasks"
+                      >
+                        <FiClipboard size={15} />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleProjectClick(project._id)
+                        }}
+                        className="p-2 rounded-lg text-gray-400 hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-gray-800 transition-all"
+                        title="Settings"
+                      >
+                        <FiSettings size={15} />
+                      </button>
                     </div>
-                  )}
-                </div>
-              </motion.div>
-            );
-          })}
+                  </div>
+                </motion.div>
+              )
+            })}
+          </AnimatePresence>
         </div>
       )}
     </div>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { FiSave, FiSettings, FiTag, FiTarget, FiLink, FiX, FiPlus } from 'react-icons/fi'
 import ProjectHeader from '../../../components/ui/ProjectHeader'
 import api from '../../../utils/api'
@@ -110,7 +110,7 @@ const ProjectSettings = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#fcfaf8] dark:bg-[#000000] pt-4">
-        <div className="max-w-3xl mx-auto animate-pulse space-y-6">
+        <div className=" mx-auto animate-pulse space-y-6">
           <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded-2xl" />
           <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded-xl" />
         </div>
@@ -120,7 +120,7 @@ const ProjectSettings = () => {
 
   return (
     <div className="min-h-screen bg-[#fcfaf8] dark:bg-[#000000] pt-4 transition-colors duration-300">
-      <div className="max-w-3xl mx-auto">
+      <div className="mx-auto">
         <ProjectHeader
           projectId={projectId}
           icon={FiSettings}

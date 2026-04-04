@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { FiArrowLeft, FiChevronRight } from 'react-icons/fi'
 import api from '../../utils/api'
 

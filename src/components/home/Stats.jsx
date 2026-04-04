@@ -117,7 +117,7 @@ const StatsSection = () => {
             <span className="inline-block px-3 py-1 rounded-full bg-orange-100 text-orange-600 text-[11px] md:text-sm font-bold mb-2 md:mb-4 border border-orange-200">
               By the Numbers
             </span>
-            <h2 className="text-3xl md:text-5xl font-black text-gray-900 dark:text-white leading-tight mb-1 md:mb-6">
+            <h2 className="text-3xl md:text-5xl font-black  text-gray-800  leading-tight mb-1 md:mb-6">
               Built for teams that
               <span className="text-transparent bg-clip-text bg-linear-to-r from-orange-600 to-orange-500"> ship</span>
             </h2>

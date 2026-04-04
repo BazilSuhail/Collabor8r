@@ -4,7 +4,7 @@ import { FaPeopleRoof, FaEye } from 'react-icons/fa6'
 import { GrTask } from 'react-icons/gr'
 import { RiTeamLine } from 'react-icons/ri'
 import { MdOutlineManageAccounts } from 'react-icons/md'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import PageHeader from '../../components/ui/Header'
 import api from '../../utils/api'
 
@@ -33,7 +33,7 @@ const TasksTimeline = ({ projectId }) => {
     fetchTasks()
   }, [projectId])
 
-  if (tasks.length === 0) return <p className="text-sm text-gray-400 py-8 text-center">No directives found for this sector.</p>
+  if (tasks.length === 0) return <p className="text-sm text-gray-400 py-8 text-center">No tasks found for this project.</p>
 
   return (
     <div className="space-y-4">
@@ -87,25 +87,27 @@ const JoinedProjectList = () => {
           icon={FaPeopleRoof}
           title="Joined"
           highlight="Projects"
-          subtitle="Collaborative sectors you are currently assigned to"
+          subtitle="Projects you are currently working on"
         />
 
         <div className='h-[1px] bg-gray-200 dark:bg-[#1a1a1a] w-full mb-8'></div>
 
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
+            {[1, 2, 3, 4, 5, 6].map((i) => <SkeletonCard key={i} />)}
           </div>
         ) : error ? (
           <div className="p-4 rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400 font-medium">{error}</div>
         ) : joinedProjects.length === 0 ? (
-          <div className='flex flex-col items-center justify-center py-20 bg-white dark:bg-[#0a0a0a] rounded-3xl border border-dashed border-gray-200 dark:border-[#1a1a1a] shadow-sm'>
-            <div className="relative mb-8">
-              <div className="absolute inset-0 bg-orange-500/10 blur-3xl rounded-full" />
-              <img src="/themes/5.jpg" alt='No projects' className='w-64 grayscale opacity-40 dark:invert brightness-0' />
+          <div className='flex flex-col items-center justify-center text-center px-6 py-16 sm:py-24'>
+            <div className="relative mb-6 sm:mb-8 w-full flex justify-center">
+              <div className="absolute inset-0 bg-orange-500/10 blur-3xl rounded-full " />
+              <img src="/placeholders/joined.svg" alt="No projects" className="w-full joined-svg max-w-88 h-auto mx-auto select-none pointer-events-none" />
             </div>
-            <p className="text-lg font-bold text-gray-800 dark:text-white mb-2">Sector Void Detected</p>
-            <p className="text-gray-500 dark:text-gray-400">You haven't been assigned to any collaborative projects yet.</p>
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white mb-2">No Projects Yet</h3>
+            <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 max-w-md">
+              You haven't joined any projects yet. Join or create one to start collaborating with your team.
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -117,9 +119,9 @@ const JoinedProjectList = () => {
                   <div className="absolute bottom-10 left-6 right-6 flex items-end justify-between">
                     <div className="min-w-0" onClick={() => handleNavigate(project._id)}>
                       <h3 className="font-bold text-white text-lg leading-tight truncate cursor-pointer hover:text-orange-400 transition-colors">{project.name}</h3>
-                      <p className="text-xs text-gray-300 font-medium truncate">Directed by {project.createdBy?.name || 'Unknown'}</p>
+                      <p className="text-xs text-gray-300 font-medium truncate">Created by {project.createdBy?.name || 'Unknown'}</p>
                     </div>
-                    <button onClick={() => handleProjectClick(project._id)} className='p-2 bg-white/10 hover:bg-orange-600 backdrop-blur-md rounded-lg text-white transition-all transform hover:scale-110' title="View Timeline">
+                    <button onClick={() => handleProjectClick(project._id)} className='p-2 bg-white/10 hover:bg-orange-600 backdrop-blur-md rounded-lg text-white transition-all transform hover:scale-110' title="View Tasks">
                       <FaEye className='text-lg' />
                     </button>
                   </div>
@@ -132,24 +134,24 @@ const JoinedProjectList = () => {
                   <div className="space-y-3 mt-2">
                     <div className='flex items-center gap-3'>
                       <RiTeamLine className='text-orange-500' />
-                      <span className='text-xs font-bold text-gray-400 dark:text-gray-500 tracking-widest'>Collaborators</span>
+                      <span className='text-xs font-bold text-gray-400 dark:text-gray-500 tracking-widest uppercase'>Team Members</span>
                       <span className='ml-auto font-bold text-gray-800 dark:text-gray-200'>{project.teamCount || 0}</span>
                     </div>
                     <div className='flex items-center gap-3'>
                       <GrTask className='text-orange-500' />
-                      <span className='text-xs font-bold text-gray-400 dark:text-gray-500 tracking-widest'>Directives</span>
+                      <span className='text-xs font-bold text-gray-400 dark:text-gray-500 tracking-widest uppercase'>Tasks</span>
                       <span className='ml-auto font-bold text-gray-800 dark:text-gray-200'>{project.taskCount || 0}</span>
                     </div>
                     <div className='pt-3 border-t border-gray-50 dark:border-[#1a1a1a]'>
                       <div className='flex items-center gap-2'>
                         <MdOutlineManageAccounts className='text-orange-500' />
-                        <span className='text-xs font-bold text-gray-400 dark:text-gray-500 tracking-widest'>Project Lead:</span>
+                        <span className='text-xs font-bold text-gray-400 dark:text-gray-500 tracking-widest uppercase'>Project Manager:</span>
                       </div>
                       <p className='mt-1 text-[11px] font-bold text-gray-700 dark:text-gray-300 truncate'>
                         {project.leads?.length ? (
                           <span className="underline decoration-orange-500/30 underline-offset-4">{project.leads.map((l) => l.email || l).join(', ')}</span>
                         ) : (
-                          <span className='text-amber-600/60 italic'>No lead assigned</span>
+                          <span className='text-amber-600/60 italic'>No manager assigned</span>
                         )}
                       </p>
                     </div>
@@ -165,7 +167,7 @@ const JoinedProjectList = () => {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className='bg-white dark:bg-[#0a0a0a] rounded-3xl border border-gray-100 dark:border-[#1a1a1a] p-8 shadow-sm'>
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-2 h-8 bg-orange-600 rounded-full" />
-                <h3 className="text-xl font-bold dark:text-white">Directive Timeline</h3>
+                <h3 className="text-xl font-bold dark:text-white">Task Overview</h3>
               </div>
               <TasksTimeline projectId={selectedProjectId} />
             </motion.div>

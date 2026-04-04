@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from 'motion/react'
 import { FiCpu, FiMessageSquare, FiZap, FiUser, FiCalendar, FiSearch, FiCheckCircle, FiAlertTriangle, FiBarChart2, FiList, FiLoader, FiChevronRight, FiCopy, FiExternalLink, FiPlus } from 'react-icons/fi'
 import PageHeader from '../../components/ui/Header'
 import api from '../../utils/api'

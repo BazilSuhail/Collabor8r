@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { motion, useScroll, useMotionValueEvent, AnimatePresence } from 'framer-motion'
+import { motion, useScroll, useMotionValueEvent, AnimatePresence } from 'motion/react'
 import { FiMenu, FiX, FiLogOut, FiChevronDown } from 'react-icons/fi'
 import useAuthStore from '../../stores/authStore'
 

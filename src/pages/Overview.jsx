@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { FiActivity, FiFolder, FiUsers, FiShield, FiCheckCircle, FiClock, FiAlertTriangle, FiBarChart2 } from 'react-icons/fi'
 import PageHeader from '../components/ui/Header'
 import api from '../utils/api'

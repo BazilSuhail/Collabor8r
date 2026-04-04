@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { FiClock, FiPlus, FiTrash2, FiEdit2, FiSave, FiX } from 'react-icons/fi'
 import ProjectHeader from '../../../components/ui/ProjectHeader'
 import api from '../../../utils/api'
@@ -75,7 +75,7 @@ const TimeTracking = () => {
 
   return (
     <div className="min-h-screen bg-[#fcfaf8] dark:bg-[#000000] pt-4 transition-colors duration-300">
-      <div className="max-w-[1100px] mx-auto">
+      <div className=" mx-auto">
         <ProjectHeader
           icon={FiClock}
           projectId={projectId}
@@ -112,7 +112,7 @@ const TimeTracking = () => {
       {showForm && (
         <motion.form initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
           onSubmit={handleSubmit}
-          className="max-w-2xl bg-white dark:bg-[#0a0a0a] rounded-xl border border-gray-200 dark:border-[#1a1a1a] p-6 mb-6 space-y-4"
+          className=" bg-white dark:bg-[#0a0a0a] rounded-xl border border-gray-200 dark:border-[#1a1a1a] p-6 mb-6 space-y-4"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>

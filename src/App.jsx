@@ -49,6 +49,7 @@ import SavedFilters from "./pages/projects/filters/SavedFilters";
 // Task & User
 import TaskDetail from "./pages/tasks/TaskDetail";
 import CreateTask from "./pages/tasks/CreateTask";
+import TaskView from "./pages/tasks/TaskView";
 import Profile from "./pages/profile/Profile";
 import Notifications from "./pages/notifications/Notifications";
 
@@ -140,6 +141,7 @@ const App = () => {
           {/* Tasks */}
           <Route path="/tasks/:taskId" element={<TaskDetail />} />
           <Route path="/projects/:projectId/tasks/create" element={<CreateTask />} />
+          <Route path="/projects/:projectId/tasks/:taskId/edit" element={<TaskView />} />
 
           {/* User */}
           <Route path="/profile" element={<Profile />} />

@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { FiLink, FiPlus, FiTrash2, FiChevronRight } from 'react-icons/fi'
 import { GoLink } from 'react-icons/go'
 import { MdOutlineLink } from 'react-icons/md'
@@ -83,7 +83,7 @@ const TaskDependencies = () => {
 
   return (
     <div className="min-h-screen bg-[#fcfaf8] dark:bg-[#000000] pt-4 transition-colors duration-300">
-      <div className="max-w-[1100px] mx-auto">
+      <div className=" mx-auto">
         <ProjectHeader
           icon={GoLink}
           projectId={projectId}
@@ -148,7 +148,7 @@ const TaskDependencies = () => {
         </motion.form>
       )}
 
-      <div className="max-w-2xl space-y-3">
+      <div className="space-y-3">
         <div className="flex items-center gap-2 text-sm font-bold text-gray-500 dark:text-gray-400 mb-2">
           <FiLink size={14} /> Dependencies
           <span className="text-xs bg-gray-100 dark:bg-[#151515] text-gray-400 px-2 py-0.5 rounded-full font-bold">{links.length}</span>

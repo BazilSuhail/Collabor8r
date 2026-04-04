@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { FiActivity, FiUser, FiCalendar, FiTag, FiClock, FiColumns, FiLink, FiMail, FiZap, FiFilter, FiChevronDown } from 'react-icons/fi'
 import ProjectHeader from '../../../components/ui/ProjectHeader'
+import CustomSelect from '../../../components/ui/CustomSelect'
 import api from '../../../utils/api'
 
 const actionColors = {
@@ -90,13 +91,46 @@ const ActivityLog = () => {
 
         <div className="flex flex-wrap items-center gap-2 mb-5">
           <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type:</span>
-          <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}
-            className="px-3 py-2 rounded-lg border border-gray-300 dark:border-[#1a1a1a] bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-white text-sm font-bold focus:ring-2 focus:ring-orange-500 outline-none transition cursor-pointer">
-            <option value="all">All Types ({activities.length})</option>
-            {Object.keys(typeIcons).filter((t) => typeCount(t) > 0).map((t) => (
-              <option key={t} value={t}>{t} ({typeCount(t)})</option>
-            ))}
-          </select>
+          <CustomSelect
+            options={[
+              { value: 'all', label: 'All Types', count: activities.length, icon: <FiFilter size={14} /> },
+              ...Object.keys(typeIcons).filter((t) => typeCount(t) > 0).map((t) => ({
+                value: t,
+                label: t,
+                count: typeCount(t),
+                icon: typeIcons[t],
+              })),
+            ]}
+            value={typeFilter}
+            onChange={(val) => setTypeFilter(val)}
+            openMode="click"
+            align="left"
+            matchTrigger
+            containerClassName="w-full"
+            menuClassName="max-w-[330px]"
+            triggerClassName="w-full"
+            renderTrigger={({ selected, toggle }) => (
+              <button type="button" onClick={toggle}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 dark:border-[#1a1a1a] bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-white text-sm font-bold transition-all hover:border-orange-500/40 cursor-pointer">
+                {selected?.icon || <FiFilter size={14} />}
+                <span className="capitalize">{selected?.label}</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-[#151515] text-gray-500 font-bold">
+                  {selected?.count ?? activities.length}
+                </span>
+                <FiChevronDown size={14} className="text-gray-400" />
+              </button>
+            )}
+            renderOption={(opt, isActive, select) => (
+              <button key={opt.value} type="button" onClick={select}
+                className={`w-full px-4 py-2.5 text-left flex items-center gap-2 text-sm font-bold capitalize transition-colors ${
+                  isActive ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900'
+                }`}>
+                {opt.icon}
+                <span className="flex-1 truncate">{opt.label}</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-[#151515] text-gray-500 font-bold">{opt.count}</span>
+              </button>
+            )}
+          />
         </div>
 
         {loading ? (

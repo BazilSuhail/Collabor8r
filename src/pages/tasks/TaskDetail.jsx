@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from 'motion/react'
 import { FiArrowLeft, FiClock, FiUser, FiTag, FiPaperclip, FiMessageSquare, FiZap, FiSend, FiTrash2, FiUpload, FiDownload, FiFile, FiLoader, FiCpu, FiLink, FiActivity, FiPlus, FiCheckCircle, FiCheckSquare, FiSave } from 'react-icons/fi'
 import api from '../../utils/api'
 

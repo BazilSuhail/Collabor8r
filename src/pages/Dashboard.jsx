@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { Link } from 'react-router-dom'
 import { FiGrid, FiFolder, FiShield, FiPlus, FiBell, FiUser, FiMail } from 'react-icons/fi'
 import PageHeader from '../components/ui/Header'

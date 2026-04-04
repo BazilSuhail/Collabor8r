@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { FiColumns, FiPlus, FiTrash2, FiEdit2, FiSave } from 'react-icons/fi'
 import ProjectHeader from '../../../components/ui/ProjectHeader'
 import api from '../../../utils/api'
@@ -102,7 +102,7 @@ const BoardConfig = () => {
 
   return (
     <div className="min-h-screen bg-[#fcfaf8] dark:bg-[#000000] pt-4 transition-colors duration-300">
-      <div className="max-w-[1100px] mx-auto">
+      <div>
         <ProjectHeader
           projectId={projectId}
           icon={FiColumns}
@@ -121,7 +121,7 @@ const BoardConfig = () => {
       {showForm && (
         <motion.form initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
           onSubmit={handleSubmit}
-          className="max-w-3xl bg-white dark:bg-[#0a0a0a] rounded-xl border border-gray-200 dark:border-[#1a1a1a] p-6 mb-6 space-y-4"
+          className=" bg-white dark:bg-[#0a0a0a] rounded-xl border border-gray-200 dark:border-[#1a1a1a] p-6 mb-6 space-y-4"
         >
           {formError && (
             <div className="p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400 rounded-xl text-xs font-semibold">{formError}</div>
@@ -169,7 +169,7 @@ const BoardConfig = () => {
       )}
 
       {loading ? (
-        <div className="space-y-2 max-w-2xl">
+        <div className="space-y-2 ">
           {[1, 2].map((i) => <div key={i} className="h-16 bg-gray-100 dark:bg-[#151515] rounded-xl animate-pulse" />)}
         </div>
       ) : boards.length === 0 ? (
@@ -179,7 +179,7 @@ const BoardConfig = () => {
           <p className="text-gray-500 dark:text-gray-400 font-medium">Create custom Kanban column layouts.</p>
         </div>
       ) : (
-        <div className="space-y-2 max-w-2xl">
+        <div className="grid lg:grid-cols-2 gap-2">
           {boards.filter(Boolean).map((board) => (
             <div key={board._id} className="bg-white dark:bg-[#0a0a0a] rounded-xl border border-gray-200 dark:border-[#1a1a1a] p-5 hover:border-orange-500/30 transition-all group">
               <div className="flex items-center justify-between mb-3">

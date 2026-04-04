@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { FiUsers, FiUserPlus, FiArrowLeft } from 'react-icons/fi'
 import PageHeader from '../../components/ui/Header'
 import api from '../../utils/api'

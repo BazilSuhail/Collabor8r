@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from 'motion/react'
 import { FiMail, FiCheck, FiX, FiFolder, FiUsers, FiClock, FiCalendar, FiAlertTriangle, FiUser, FiShield } from 'react-icons/fi'
 import { GoPersonAdd } from 'react-icons/go'
 import { RxCross2 } from 'react-icons/rx'
