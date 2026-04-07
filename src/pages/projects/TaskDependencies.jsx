@@ -5,7 +5,7 @@ import { FiLink, FiPlus, FiTrash2, FiChevronRight } from 'react-icons/fi'
 import { GoLink } from 'react-icons/go'
 import { MdOutlineLink } from 'react-icons/md'
 import ProjectHeader from '../../components/ui/ProjectHeader'
-import api from '../../utils/api'
+import { get, post, del } from '../../utils/http'
 
 const TaskDependencies = () => {
   const { projectId } = useParams()
@@ -17,7 +17,7 @@ const TaskDependencies = () => {
 
   const fetchLinks = async () => {
     const allLinkPromises = tasks.map((t) =>
-      api('GET', '/task-links/task/' + t._id).then((res) => res.data || [])
+      get('/task-links/task/' + t._id).then((res) => res.data || [])
     )
     const results = await Promise.allSettled(allLinkPromises)
     const allLinks = results
@@ -29,7 +29,7 @@ const TaskDependencies = () => {
 
   useEffect(() => {
     const load = async () => {
-      const tasksRes = await api('GET', '/manageTasks/project/' + projectId)
+      const tasksRes = await get('/manageTasks/project/' + projectId)
       const taskList = tasksRes.data.validTasks || tasksRes.data.tasks || tasksRes.data || []
       setTasks(taskList)
       setLoading(false)
@@ -49,7 +49,7 @@ const TaskDependencies = () => {
     e.preventDefault()
     if (!form.sourceTaskId || !form.targetTaskId || form.sourceTaskId === form.targetTaskId) return
     try {
-      const { data } = await api('POST', '/task-links', { ...form, projectId })
+      const { data } = await post('/task-links', { ...form, projectId })
       setLinks((prev) => [...prev, data])
       setForm({ sourceTaskId: '', targetTaskId: '', linkType: 'blocks' })
       setShowForm(false)
@@ -61,7 +61,7 @@ const TaskDependencies = () => {
   const handleDelete = async (linkId) => {
     if (!confirm('Remove this dependency link?')) return
     try {
-      await api('DELETE', '/task-links/' + linkId)
+      await del('/task-links/' + linkId)
       setLinks((prev) => prev.filter((l) => l._id !== linkId))
     } catch (err) {
       console.error(err)

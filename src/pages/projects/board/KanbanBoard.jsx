@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'motion/react'
 import { FiColumns, FiPlus, FiFilter, FiX } from 'react-icons/fi'
 import ProjectHeader from '../../../components/ui/ProjectHeader'
-import api from '../../../utils/api'
+import { get, post, patch } from '../../../utils/http'
 import useAuthStore from '../../../stores/authStore'
 
 const defaultColumns = [
@@ -37,10 +37,10 @@ const KanbanBoard = () => {
   useEffect(() => {
     const load = async () => {
       const [tasksRes, usersRes, boardsRes, sprintsRes] = await Promise.allSettled([
-        api('GET', '/project-tasks/' + projectId + '/tasks'),
-        api('GET', '/manageusers/' + projectId + '/get-all-users'),
-        api('GET', '/boards/project/' + projectId),
-        api('GET', '/sprints/' + projectId),
+        get('/project-tasks/' + projectId + '/tasks'),
+        get('/manageusers/' + projectId + '/get-all-users'),
+        get('/boards/project/' + projectId),
+        get('/sprints/' + projectId),
       ])
       if (tasksRes.status === 'fulfilled') {
         const d = tasksRes.value.data
@@ -62,10 +62,10 @@ const KanbanBoard = () => {
     }
     load()
     const checkRole = async () => {
-      const { data } = await api('GET', '/admin-projects/' + projectId)
+      const { data } = await get('/admin-projects/' + projectId)
       if (!data.error) setRole('creator')
       else {
-        const { data: mgrData } = await api('GET', '/joinedprojects/' + projectId)
+        const { data: mgrData } = await get('/joinedprojects/' + projectId)
         if (mgrData?.project?.manager === user?._id) setRole('manager')
       }
     }
@@ -95,7 +95,7 @@ const KanbanBoard = () => {
     if (!isCreatorOrManager && !isOwnTask(task)) return
     setSaving(true)
     setTaskInList(taskId, (t) => ({ ...t, status: newStatus }))
-    const { error } = await api('PATCH', '/projecttasks/tasks/update', { updates: [{ id: taskId, status: newStatus }] })
+    const { error } = await patch('/projecttasks/tasks/update', { updates: [{ id: taskId, status: newStatus }] })
     if (error) setTaskInList(taskId, (t) => ({ ...t, status: task.status }))
     setSaving(false)
   }
@@ -139,7 +139,7 @@ const KanbanBoard = () => {
     }
     if (!body.assignedTo) body.assignedTo = user?._id
     if (!body.sprintId) delete body.sprintId
-    const { error } = await api('POST', '/manageTasks/', body)
+    const { error } = await post('/manageTasks/', body)
     if (error) { setTaskError('Failed to create task.'); return }
     setTaskForm(emptyTaskForm)
     setShowQuickAdd(false)

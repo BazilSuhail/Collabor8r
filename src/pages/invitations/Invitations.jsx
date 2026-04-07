@@ -5,7 +5,7 @@ import { GoPersonAdd } from 'react-icons/go'
 import { RxCross2 } from 'react-icons/rx'
 import { IoCheckmarkDoneCircleOutline } from 'react-icons/io5'
 import PageHeader from '../../components/ui/Header'
-import api from '../../utils/api'
+import { get, post } from '../../utils/http'
 
 const FILTERS = [
   { key: 'all', label: 'All' },
@@ -25,7 +25,7 @@ const Invitations = () => {
 
   useEffect(() => {
     const load = async () => {
-      const { data } = await api('GET', '/invitations/pending')
+      const { data } = await get('/invitations/pending')
       setInvitations(data || [])
     }
     load()
@@ -65,7 +65,7 @@ const Invitations = () => {
   const handleAccept = useCallback(async () => {
     setLoading(true)
     try {
-      await api('POST', `/invitations/${modalInv.token}/accept`)
+      await post(`/invitations/${modalInv.token}/accept`)
       setInvitations((prev) => prev.map((i) => i._id === modalInv._id ? { ...i, status: 'accepted' } : i))
       setFeedback({ type: 'success', message: `You've joined "${modalInv.projectName}"` })
       setModalInv(null)
@@ -79,7 +79,7 @@ const Invitations = () => {
   const handleDecline = useCallback(async (inv) => {
     setInvitations((prev) => prev.map((i) => i._id === inv._id ? { ...i, status: 'declined' } : i))
     try {
-      await api('POST', `/invitations/${inv.token}/decline`)
+      await post(`/invitations/${inv.token}/decline`)
       setFeedback({ type: 'success', message: `Declined invitation for "${inv.projectName}"` })
     } catch {
       setFeedback({ type: 'error', message: 'Failed to decline invitation' })

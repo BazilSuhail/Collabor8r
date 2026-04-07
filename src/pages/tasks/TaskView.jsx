@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { FiArrowLeft, FiSave, FiZap, FiTag, FiClock, FiUser, FiLayers, FiLink, FiCheckCircle, FiEdit3 } from 'react-icons/fi'
-import api from '../../utils/api'
+import { get, patch, post } from '../../utils/http'
 import useAuthStore from '../../stores/authStore'
 import CustomSelect from '../../components/ui/CustomSelect'
 
@@ -91,11 +91,11 @@ const TaskView = () => {
   useEffect(() => {
     const load = async () => {
       const [usersRes, sprintsRes, labelsRes, tasksRes, taskRes] = await Promise.allSettled([
-        api('GET', '/manageusers/' + projectId + '/get-all-users'),
-        api('GET', '/sprints/' + projectId),
-        api('GET', '/labels/project/' + projectId),
-        api('GET', '/manageTasks/project/' + projectId),
-        taskId ? api('GET', '/project-tasks/' + taskId) : Promise.resolve({ status: 'fulfilled', value: { data: null } }),
+        get('/manageusers/' + projectId + '/get-all-users'),
+        get('/sprints/' + projectId),
+        get('/labels/project/' + projectId),
+        get('/manageTasks/project/' + projectId),
+        taskId ? get('/project-tasks/' + taskId) : Promise.resolve({ status: 'fulfilled', value: { data: null } }),
       ])
 
       if (usersRes.status === 'fulfilled') setUsers(usersRes.value.data || [])
@@ -121,10 +121,10 @@ const TaskView = () => {
         })
       }
 
-      const { data } = await api('GET', '/admin-projects/' + projectId)
+      const { data } = await get('/admin-projects/' + projectId)
       if (!data.error) setRole('creator')
       else {
-        const { data: mgrData } = await api('GET', '/joinedprojects/' + projectId)
+        const { data: mgrData } = await get('/joinedprojects/' + projectId)
         if (mgrData?.project?.manager === user?._id) setRole('manager')
       }
 
@@ -154,8 +154,8 @@ const TaskView = () => {
     if (!body.assignedTo) body.assignedTo = user?._id
 
     const res = isEdit
-      ? await api('PATCH', '/manageTasks/' + taskId, body)
-      : await api('POST', '/manageTasks/', { ...body, projectId })
+      ? await patch('/manageTasks/' + taskId, body)
+      : await post('/manageTasks/', { ...body, projectId })
 
     setSubmitting(false)
     if (res.error) {

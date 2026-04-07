@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { motion } from 'motion/react'
 import { FiBell, FiCheck, FiTrash2, FiZap, FiUser, FiFolder, FiShield } from 'react-icons/fi'
 import PageHeader from '../../components/ui/Header'
-import api from '../../utils/api'
+import { get } from '../../utils/http'
 
 const typeIcons = {
   task_assigned: FiZap,
@@ -18,7 +18,7 @@ const Notifications = () => {
 
   useEffect(() => {
     const load = async () => {
-      const { data } = await api('GET', '/profile/get-notifications')
+      const { data } = await get('/profile/get-notifications')
       setNotifications(data || [])
     }
     load()

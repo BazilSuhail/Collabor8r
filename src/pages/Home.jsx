@@ -1,7 +1,7 @@
 import { ReactLenis } from "lenis/react"
 import { useEffect } from 'react'
 import Navbar from '../components/layout/Navbar'
-import api from '../utils/api'
+import { get } from '../utils/http'
 import CanvasCursor from '../components/cursor/CanvasCursor'
 import Hero from '../components/home/Hero'
 import Features from '../components/home/Features'
@@ -16,7 +16,7 @@ const Home = () => {
   useEffect(() => {
     const key = 'serverWoken'
     if (!sessionStorage.getItem(key)) {
-      api('get', '/health')
+      get('/health')
       sessionStorage.setItem(key, 'true')
     }
   }, [])

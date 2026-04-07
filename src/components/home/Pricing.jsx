@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import  { useState } from 'react';
 import { motion } from 'motion/react';
-import { FiCheck, FiArrowRight, FiZap, FiTarget, FiActivity } from 'react-icons/fi';
+import { FiCheck, FiArrowRight, FiZap } from 'react-icons/fi';
 
 export default function Pricing() {
   const [billingCycle, setBillingCycle] = useState('monthly');

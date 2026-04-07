@@ -3,12 +3,12 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'motion/react'
 import {
   FiPlus, FiArrowLeft, FiArrowRight, FiCpu, FiCheckCircle, FiZap,
-  FiChevronRight, FiMail, FiCalendar, FiTag, FiLayers, FiEdit2,
+  FiChevronRight, FiMail, FiTag, FiLayers, FiEdit2,
 } from 'react-icons/fi'
 import { IoCheckmarkDoneCircleOutline } from 'react-icons/io5'
 import PageHeader from '../../components/ui/Header'
 import useProjectStore from '../../stores/projectStore'
-import api from '../../utils/api'
+import { post } from '../../utils/http'
 
 const STEPS = [
   { id: 'ai', label: 'AI Draft', icon: FiCpu, desc: 'Describe your project' },
@@ -91,7 +91,7 @@ const CreateProject = () => {
     setError('')
     setChat((prev) => [...prev, { role: 'user', text: prompt }])
     try {
-      const res = await api('POST', '/projects/ai-assist', { prompt })
+      const res = await post('/projects/ai-assist', { prompt })
       if (res.error) throw new Error(res.error?.error || 'AI draft failed')
       const p = res.data?.project || {}
       setDraft({

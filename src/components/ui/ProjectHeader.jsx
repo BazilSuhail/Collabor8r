@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { motion } from 'motion/react'
 import { FiArrowLeft, FiChevronRight } from 'react-icons/fi'
-import api from '../../utils/api'
+import { get } from '../../utils/http'
 
 const ProjectHeader = ({
   projectId,
@@ -23,7 +22,7 @@ const ProjectHeader = ({
     let mounted = true
     const load = async () => {
       if (!projectId) { setLoading(false); return }
-      const { data, error } = await api('GET', '/admin-projects/' + projectId)
+      const { data } = await get('/admin-projects/' + projectId)
       if (mounted) {
         setProjectName(data?.project?.name || data?.name || fallbackName)
         setLoading(false)

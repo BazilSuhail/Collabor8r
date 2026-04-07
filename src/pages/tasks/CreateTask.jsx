@@ -7,7 +7,7 @@ import {
 } from 'react-icons/fi'
 import { IoCheckmarkDoneCircleOutline } from 'react-icons/io5'
 import PageHeader from '../../components/ui/Header'
-import api from '../../utils/api'
+import { get, post } from '../../utils/http'
 import useAuthStore from '../../stores/authStore'
 
 const STEPS = [
@@ -66,10 +66,10 @@ const CreateTask = () => {
   useEffect(() => {
     const load = async () => {
       const [usersRes, sprintsRes, labelsRes, tasksRes] = await Promise.allSettled([
-        api('GET', '/manageusers/' + projectId + '/get-all-users'),
-        api('GET', '/sprints/' + projectId),
-        api('GET', '/labels/project/' + projectId),
-        api('GET', '/manageTasks/project/' + projectId),
+        get('/manageusers/' + projectId + '/get-all-users'),
+        get('/sprints/' + projectId),
+        get('/labels/project/' + projectId),
+        get('/manageTasks/project/' + projectId),
       ])
       if (usersRes.status === 'fulfilled') setUsers(usersRes.value.data || [])
       if (sprintsRes.status === 'fulfilled') setSprints(sprintsRes.value.data || [])
@@ -82,10 +82,10 @@ const CreateTask = () => {
     }
     load()
     const checkRole = async () => {
-      const { data } = await api('GET', '/admin-projects/' + projectId)
+      const { data } = await get('/admin-projects/' + projectId)
       if (!data.error) setRole('creator')
       else {
-        const { data: mgrData } = await api('GET', '/joinedprojects/' + projectId)
+        const { data: mgrData } = await get('/joinedprojects/' + projectId)
         if (mgrData?.project?.manager === user?._id) setRole('manager')
       }
     }
@@ -98,7 +98,7 @@ const CreateTask = () => {
     setGenerating(true)
     setError('')
     try {
-      const res = await api('POST', '/ai/draft-task', { prompt, projectId })
+      const res = await post('/ai/draft-task', { prompt, projectId })
       if (res.error) throw new Error(res.error?.error || 'AI draft failed')
       const t = res.data?.task || {}
       const match = users.find((u) => u.email === t.suggestedAssignee)
@@ -131,7 +131,7 @@ const CreateTask = () => {
     setSuggestedTasks([])
     setBulkCreated(0)
     try {
-      const res = await api('POST', '/ai/roadmap', { projectId, goal: goal.trim() })
+      const res = await post('/ai/roadmap', { projectId, goal: goal.trim() })
       if (res.error) throw new Error(res.error?.error || 'Failed to generate roadmap')
       setRoadmap(res.data?.roadmap || null)
     } catch (err) {
@@ -145,7 +145,7 @@ const CreateTask = () => {
     setBulkLoading(true)
     setError('')
     try {
-      const res = await api('POST', '/ai/suggest-tasks', {
+      const res = await post('/ai/suggest-tasks', {
         projectId,
         roadmap: roadmap || undefined,
         prompt: goal.trim() || undefined,
@@ -164,7 +164,7 @@ const CreateTask = () => {
     setCreatingBulk(true)
     setError('')
     try {
-      const res = await api('POST', '/ai/create-tasks', { projectId, tasks: suggestedTasks })
+      const res = await post('/ai/create-tasks', { projectId, tasks: suggestedTasks })
       if (res.error) throw new Error(res.error?.error || 'Failed to create tasks')
       setBulkCreated(res.data?.count || suggestedTasks.length)
       setSuggestedTasks([])
@@ -198,7 +198,7 @@ const CreateTask = () => {
     }
     setSuggesting(true)
     setError('')
-    const { data, error: err } = await api('POST', '/ai/suggest-assignee', {
+    const { data, error: err } = await post('/ai/suggest-assignee', {
       projectId,
       taskDescription: `${draft.title} — ${draft.description}`,
     })
@@ -210,7 +210,7 @@ const CreateTask = () => {
   const generateCriteria = async () => {
     if (!draft.title.trim()) { setError('Add a task title first.'); return }
     setError('')
-    const { data, error: err } = await api('POST', '/ai/generate-acceptance-criteria', {
+    const { data, error: err } = await post('/ai/generate-acceptance-criteria', {
       title: draft.title,
       description: draft.description,
     })
@@ -264,7 +264,7 @@ const CreateTask = () => {
       parentId: draft.parentId || undefined,
     }
     if (!body.assignedTo) body.assignedTo = user?._id
-    const res = await api('POST', '/manageTasks/', body)
+    const res = await post('/manageTasks/', body)
     setSubmitting(false)
     if (res.error) {
       setError(res.error?.error || res.error?.errors?.[0] || 'Failed to create task')

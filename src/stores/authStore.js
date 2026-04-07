@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import api from '../utils/api'
+import { post } from '../utils/http'
 import useSocketStore from './socketStore'
 
 const useAuthStore = create((set, get) => ({
@@ -8,7 +8,7 @@ const useAuthStore = create((set, get) => ({
   isAuthenticated: !!localStorage.getItem('token'),
 
   login: async (email, password) => {
-    const { data, error } = await api('POST', '/auth/signin', { email, password })
+    const { data, error } = await post('/auth/signin', { email, password })
     if (error) throw error
     localStorage.setItem('token', data.token)
     set({ token: data.token, isAuthenticated: true })
@@ -16,7 +16,7 @@ const useAuthStore = create((set, get) => ({
   },
 
   loginWithCode: async (email, code) => {
-    const { data, error } = await api('POST', '/auth/signin-code', { email, code })
+    const { data, error } = await post('/auth/signin-code', { email, code })
     if (error) throw error
     localStorage.setItem('token', data.token)
     set({ token: data.token, isAuthenticated: true })
@@ -24,7 +24,7 @@ const useAuthStore = create((set, get) => ({
   },
 
   signup: async (userData) => {
-    const { data, error } = await api('POST', '/auth/signup', userData)
+    const { data, error } = await post('/auth/signup', userData)
     if (error) throw error
     localStorage.setItem('token', data.token)
     set({ token: data.token, isAuthenticated: true })
@@ -32,7 +32,7 @@ const useAuthStore = create((set, get) => ({
   },
 
   signupWithCode: async (email, code, userData) => {
-    const { data, error } = await api('POST', '/auth/signup-code', { ...userData, email, code })
+    const { data, error } = await post('/auth/signup-code', { ...userData, email, code })
     if (error) throw error
     localStorage.setItem('token', data.token)
     set({ token: data.token, isAuthenticated: true })
@@ -40,7 +40,7 @@ const useAuthStore = create((set, get) => ({
   },
 
   sendCode: async (email, purpose) => {
-    const { error } = await api('POST', '/auth/send-code', { email, purpose })
+    const { error } = await post('/auth/send-code', { email, purpose })
     if (error) throw error
   },
 
@@ -52,7 +52,7 @@ const useAuthStore = create((set, get) => ({
 
   loadUser: async () => {
     try {
-      const { data, error } = await api('GET', '/profile/')
+      const { data, error } = await get('/profile/')
       if (error) throw error
       set({ user: data })
       const { connect } = useSocketStore.getState()
@@ -63,18 +63,18 @@ const useAuthStore = create((set, get) => ({
   },
 
   updateProfile: async (profileData) => {
-    const { data, error } = await api('PUT', '/profile/', profileData)
+    const { data, error } = await put('/profile/', profileData)
     if (error) throw error
     set({ user: data })
   },
 
   forgotPassword: async (email) => {
-    const { error } = await api('POST', '/auth/forgot-password', { email })
+    const { error } = await post('/auth/forgot-password', { email })
     if (error) throw error
   },
 
   resetPassword: async (email, code, newPassword) => {
-    const { error } = await api('POST', '/auth/reset-password', { email, code, newPassword })
+    const { error } = await post('/auth/reset-password', { email, code, newPassword })
     if (error) throw error
   },
 }))

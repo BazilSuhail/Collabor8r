@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'motion/react'
 import { FiCalendar, FiPlus, FiChevronRight } from 'react-icons/fi'
 import ProjectHeader from '../../../components/ui/ProjectHeader'
-import api from '../../../utils/api'
+import { get, post } from '../../../utils/http'
 
 const SprintPlanning = () => {
   const { projectId } = useParams()
@@ -19,8 +19,8 @@ const SprintPlanning = () => {
   useEffect(() => {
     const load = async () => {
       const [sprintsRes, tasksRes] = await Promise.all([
-        api('GET', '/sprints/' + projectId),
-        api('GET', '/manageTasks/project/' + projectId),
+        get('/sprints/' + projectId),
+        get('/manageTasks/project/' + projectId),
       ])
       setSprints(sprintsRes.data || [])
       setTasks(tasksRes.data.validTasks || tasksRes.data.tasks || tasksRes.data || [])
@@ -32,7 +32,7 @@ const SprintPlanning = () => {
   const handleCreate = async (e) => {
     e.preventDefault()
     if (!form.name.trim()) return
-    const { data } = await api('POST', '/sprints/' + projectId, form)
+    const { data } = await post('/sprints/' + projectId, form)
     setSprints((prev) => [...prev, data])
     setForm({ name: '', goal: '', startDate: '', endDate: '' })
     setShowForm(false)
@@ -46,7 +46,7 @@ const SprintPlanning = () => {
 
   const addTasksToSprint = async () => {
     if (!selectedTasks.length || !addingToSprint) return
-    await api('POST', '/sprints/sprint/' + addingToSprint + '/add-tasks', { taskIds: selectedTasks })
+    await post('/sprints/sprint/' + addingToSprint + '/add-tasks', { taskIds: selectedTasks })
     setAddingToSprint(null)
     setSelectedTasks([])
   }

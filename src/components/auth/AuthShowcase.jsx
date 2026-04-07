@@ -1,9 +1,9 @@
 import { motion } from 'motion/react'
 import {
-  FiCheckSquare, FiBell, FiMessageSquare, FiCalendar,
-  FiBarChart2, FiShield, FiUsers,
+  FiCheckSquare, FiBell, FiCalendar,
+  FiBarChart2, FiUsers,
   FiGitBranch, FiZap, FiTarget, FiHexagon, FiDroplet,
-  FiBox, FiCircle, FiCrosshair, FiStar,
+  FiBox, FiCrosshair, FiStar,
 } from 'react-icons/fi'
 
 const floatingIcons = [

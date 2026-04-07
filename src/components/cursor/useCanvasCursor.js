@@ -79,11 +79,6 @@ const useCanvasCursor = () => {
   };
 
   function onMousemove(e) {
-    function o() {
-      lines = [];
-      for (var e = 0; e < E.trails; e++)
-        lines.push(new Line({ spring: 0.4 + (e / E.trails) * 0.025 }));
-    }
     function c(e) {
       (e.touches
         ? ((pos.x = e.touches[0].pageX), (pos.y = e.touches[0].pageY))
@@ -94,14 +89,16 @@ const useCanvasCursor = () => {
       1 == e.touches.length &&
         ((pos.x = e.touches[0].pageX), (pos.y = e.touches[0].pageY));
     }
-    (document.removeEventListener('mousemove', onMousemove),
-      document.removeEventListener('touchstart', onMousemove),
-      document.addEventListener('mousemove', c),
-      document.addEventListener('touchmove', c),
-      document.addEventListener('touchstart', l),
-      c(e),
-      o(),
-      render());
+    document.removeEventListener('mousemove', onMousemove);
+    document.removeEventListener('touchstart', onMousemove);
+    document.addEventListener('mousemove', c);
+    document.addEventListener('touchmove', c);
+    document.addEventListener('touchstart', l);
+    c(e);
+    lines = [];
+    for (var i = 0; i < E.trails; i++)
+      lines.push(new Line({ spring: 0.4 + (i / E.trails) * 0.025 }));
+    render();
   }
 
   function render() {
@@ -146,6 +143,16 @@ const useCanvasCursor = () => {
     this.vx = 0;
   }
 
+  const handleFocus = () => {
+    if (!ctx.running) {
+      ctx.running = true;
+      render();
+    }
+  };
+  const handleBlur = () => {
+    ctx.running = true;
+  };
+
   const renderCanvas = function () {
     ctx = document.getElementById('canvas-cursor').getContext('2d');
     ctx.running = true;
@@ -160,15 +167,8 @@ const useCanvasCursor = () => {
     document.addEventListener('touchstart', onMousemove);
     document.body.addEventListener('orientationchange', resizeCanvas);
     window.addEventListener('resize', resizeCanvas);
-    window.addEventListener('focus', () => {
-      if (!ctx.running) {
-        ctx.running = true;
-        render();
-      }
-    });
-    window.addEventListener('blur', () => {
-      ctx.running = true;
-    });
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('blur', handleBlur);
     resizeCanvas();
   };
 
@@ -183,15 +183,8 @@ const useCanvasCursor = () => {
       document.removeEventListener('touchstart', onMousemove);
       document.body.removeEventListener('orientationchange', resizeCanvas);
       window.removeEventListener('resize', resizeCanvas);
-      window.removeEventListener('focus', () => {
-        if (!ctx.running) {
-          ctx.running = true;
-          render();
-        }
-      });
-      window.removeEventListener('blur', () => {
-        ctx.running = true;
-      });
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('blur', handleBlur);
     };
   }, []);
 };

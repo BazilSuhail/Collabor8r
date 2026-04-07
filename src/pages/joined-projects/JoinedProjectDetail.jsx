@@ -21,7 +21,7 @@ import { GoLink } from 'react-icons/go'
 import { motion } from 'motion/react'
 import useProjectStore from '../../stores/projectStore'
 import useAuthStore from '../../stores/authStore'
-import api from '../../utils/api'
+import { get } from '../../utils/http'
 import TeamMembers from '../../components/modals/TeamMembers'
 
 const navSections = (projectId) => [
@@ -89,6 +89,11 @@ const ProjectTasksSection = ({ tasks, creator }) => {
 
             <div className="flex flex-col items-end gap-2">
               <div className='flex items-center gap-2 px-3 py-1.5 bg-red-50 dark:bg-red-900/10 rounded-lg text-red-600 dark:text-red-400'>
+                <span className="text-[12px] font-black tracking-tighter">Creator:</span>
+                <span className='text-xs font-semibold'>{creator}</span>
+              </div>
+              
+              <div className='flex items-center gap-2 px-3 py-1.5 bg-red-50 dark:bg-red-900/10 rounded-lg text-red-600 dark:text-red-400'>
                 <span className="text-[12px] font-black tracking-tighter">Deadline</span>
                 <span className='text-xs font-semibold'>{task.dueDate ? new Date(task.dueDate.$date || task.dueDate).toLocaleDateString() : 'N/A'}</span>
               </div>
@@ -127,7 +132,7 @@ const JoinedProjectDetail = () => {
   useEffect(() => {
     const fetchProjectTasks = async () => {
       try {
-        const { data } = await api('GET', '/projecttasks/' + projectId)
+        const { data } = await get('/projecttasks/' + projectId)
         const tasks = data.tasks || []
         const assignedToMe = tasks.filter(t => t.task?.assignedTo === user?._id)
         setAllTasks(tasks)

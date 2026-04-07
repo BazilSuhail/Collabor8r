@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'motion/react'
-import { FiArrowLeft, FiClock, FiUser, FiTag, FiPaperclip, FiMessageSquare, FiZap, FiSend, FiTrash2, FiUpload, FiDownload, FiFile, FiLoader, FiCpu, FiLink, FiActivity, FiPlus, FiCheckCircle, FiCheckSquare, FiSave } from 'react-icons/fi'
-import api from '../../utils/api'
+import { FiArrowLeft, FiClock, FiPaperclip, FiMessageSquare, FiZap, FiSend, FiTrash2, FiUpload, FiDownload, FiFile, FiLoader, FiCpu, FiLink, FiActivity, FiPlus, FiCheckCircle, FiCheckSquare, FiSave } from 'react-icons/fi'
+import { get, post, patch, del } from '../../utils/http'
 
 const priorityMeta = {
   High: { dot: 'bg-red-500', text: 'text-red-600 dark:text-red-400', ring: 'ring-red-500/20', label: 'High' },
@@ -46,12 +46,12 @@ const TaskDetail = () => {
   useEffect(() => {
     const load = async () => {
       const [taskRes, commentsRes, filesRes, timeRes, activityRes, linksRes] = await Promise.allSettled([
-        api('GET', '/project-tasks/' + taskId),
-        api('GET', '/comments/tasks/' + taskId + '/comments'),
-        api('GET', '/uploads/task/' + taskId),
-        api('GET', '/time/entries/task/' + taskId),
-        api('GET', '/activity/task/' + taskId),
-        api('GET', '/task-links/task/' + taskId),
+        get('/project-tasks/' + taskId),
+        get('/comments/tasks/' + taskId + '/comments'),
+        get('/uploads/task/' + taskId),
+        get('/time/entries/task/' + taskId),
+        get('/activity/task/' + taskId),
+        get('/task-links/task/' + taskId),
       ])
       if (taskRes.status === 'fulfilled') setCurrentTask(taskRes.value.data)
       if (commentsRes.status === 'fulfilled') setComments(commentsRes.value.data.comments || commentsRes.value.data || [])
@@ -73,14 +73,14 @@ const TaskDetail = () => {
 
   const addComment = async () => {
     if (!commentText.trim()) return
-    const { data } = await api('POST', '/comments/tasks/' + taskId + '/comments', { content: commentText })
+    const { data } = await post('/comments/tasks/' + taskId + '/comments', { content: commentText })
     const newComment = data.comment || data
     setComments((prev) => [...prev, newComment])
     setCommentText('')
   }
 
   const deleteComment = async (commentId) => {
-    await api('DELETE', '/comments/' + commentId)
+    await del('/comments/' + commentId)
     setComments((prev) => prev.filter((c) => c._id !== commentId))
   }
 
@@ -90,7 +90,7 @@ const TaskDetail = () => {
     setUploading(true)
     const formData = new FormData()
     formData.append('files', file)
-    const { data } = await api('POST', '/uploads/task/' + taskId, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+    const { data } = await post('/uploads/task/' + taskId, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
     const uploaded = data.files || []
     if (Array.isArray(uploaded)) setFiles((prev) => [...prev, ...uploaded])
     else if (uploaded.name) setFiles((prev) => [...prev, uploaded])
@@ -98,14 +98,14 @@ const TaskDetail = () => {
   }
 
   const deleteFile = async (fileId) => {
-    await api('DELETE', '/uploads/' + fileId)
+    await del('/uploads/' + fileId)
     setFiles((prev) => prev.filter((f) => f._id !== fileId && f.id !== fileId))
   }
 
   const logTime = async (e) => {
     e.preventDefault()
     if (!timeForm.hours) return
-    const { data } = await api('POST', '/time/entries', { taskId, hours: parseFloat(timeForm.hours), description: timeForm.description })
+    const { data } = await post('/time/entries', { taskId, hours: parseFloat(timeForm.hours), description: timeForm.description })
     const entry = data.entry || data
     setTimeEntries((prev) => [...prev, entry])
     setTimeForm({ hours: '', description: '' })
@@ -113,14 +113,14 @@ const TaskDetail = () => {
   }
 
   const deleteTimeEntry = async (entryId) => {
-    await api('DELETE', '/time/entries/' + entryId)
+    await del('/time/entries/' + entryId)
     setTimeEntries((prev) => prev.filter((e) => e._id !== entryId))
   }
 
   const generateCriteria = async () => {
     setAiLoading('criteria')
     setAiSummary(null)
-    const { data, error } = await api('POST', '/ai/generate-acceptance-criteria', {
+    const { data, error } = await post('/ai/generate-acceptance-criteria', {
       title: currentTask.title,
       description: currentTask.description,
     })
@@ -132,7 +132,7 @@ const TaskDetail = () => {
   const summarizeComments = async () => {
     setAiLoading('summary')
     setAiSummary(null)
-    const { data, error } = await api('POST', '/ai/summarize-comments', { taskId })
+    const { data, error } = await post('/ai/summarize-comments', { taskId })
     setAiLoading(null)
     if (error) return
     setAiSummary(data)
@@ -140,14 +140,9 @@ const TaskDetail = () => {
 
   const saveCriteria = async () => {
     setSavingCriteria(true)
-    await api('PATCH', '/manageTasks/' + taskId, { acceptanceCriteria: generatedCriteria })
+    await patch('/manageTasks/' + taskId, { acceptanceCriteria: generatedCriteria })
     setCriteria(generatedCriteria)
     setSavingCriteria(false)
-  }
-
-  const toggleCriteriaItem = (index) => {
-    setGeneratedCriteria((prev) => prev.map((c, i) => (i === index ? c : c)))
-    setCriteria((prev) => prev.map((c, i) => (i === index ? c : c)))
   }
 
   const hasUnsavedCriteria = generatedCriteria.length > 0 && JSON.stringify(generatedCriteria) !== JSON.stringify(criteria)

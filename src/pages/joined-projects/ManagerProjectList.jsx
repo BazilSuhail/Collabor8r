@@ -5,7 +5,7 @@ import { GrTask } from 'react-icons/gr'
 import { RiAdminLine, RiTeamLine } from 'react-icons/ri'
 import { motion } from 'motion/react'
 import PageHeader from '../../components/ui/Header'
-import api from '../../utils/api'
+import { get } from '../../utils/http'
 
 const SkeletonCard = () => (
   <div className="bg-white dark:bg-[#121212] border border-gray-100 dark:border-[#1a1a1a] rounded-xl overflow-hidden animate-pulse h-[280px]">
@@ -25,7 +25,7 @@ const ManagerProjectList = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data, error } = await api('GET', '/joinedprojects/as-lead')
+      const { data, error } = await get('/joinedprojects/as-lead')
       if (error) setError(error?.error || 'Failed to load managed projects')
       else setManagedProjects(data || [])
       setLoading(false)

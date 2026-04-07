@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, useInView } from 'motion/react';
+import { motion } from 'motion/react';
 import { FiArrowRight } from 'react-icons/fi';
 
 const wordReveal = {

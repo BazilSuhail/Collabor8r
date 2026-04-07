@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'motion/react'
 import { FiCalendar, FiPlay, FiCheckCircle, FiTrash2, FiEdit2, FiSave, FiX, FiPlus, FiTrendingUp, FiZap } from 'react-icons/fi'
 import ProjectHeader from '../../../components/ui/ProjectHeader'
-import api from '../../../utils/api'
+import { get, post, put, del } from '../../../utils/http'
 
 const SprintDetail = () => {
   const { projectId } = useParams()
@@ -25,8 +25,8 @@ const SprintDetail = () => {
   useEffect(() => {
     const load = async () => {
       const [sprintsRes, tasksRes] = await Promise.allSettled([
-        api('GET', '/sprints/' + projectId),
-        api('GET', '/manageTasks/project/' + projectId),
+        get('/sprints/' + projectId),
+        get('/manageTasks/project/' + projectId),
       ])
       if (sprintsRes.status === 'fulfilled') setSprints(sprintsRes.value.data || [])
       if (tasksRes.status === 'fulfilled') setTasks(tasksRes.value.data.validTasks || tasksRes.value.data.tasks || tasksRes.value.data || [])
@@ -36,25 +36,25 @@ const SprintDetail = () => {
   }, [projectId])
 
   const handleActivate = async (id) => {
-    const { data } = await api('POST', '/sprints/sprint/' + id + '/activate')
+    const { data } = await post('/sprints/sprint/' + id + '/activate')
     setSprints((prev) => prev.map((s) => (s._id === id ? data : s)))
   }
 
   const handleComplete = async (id) => {
-    const { data } = await api('POST', '/sprints/sprint/' + id + '/complete')
+    const { data } = await post('/sprints/sprint/' + id + '/complete')
     setSprints((prev) => prev.map((s) => (s._id === id ? data : s)))
   }
 
   const handleDelete = async (id) => {
     if (!confirm('Delete this sprint?')) return
-    await api('DELETE', '/sprints/sprint/' + id)
+    await del('/sprints/sprint/' + id)
     setSprints((prev) => prev.filter((s) => s._id !== id))
   }
 
   const handleCreateSprint = async (e) => {
     e.preventDefault()
     if (!createForm.name.trim()) return
-    const { data } = await api('POST', '/sprints/' + projectId, createForm)
+    const { data } = await post('/sprints/' + projectId, createForm)
     setSprints((prev) => [data, ...prev])
     setCreateForm({ name: '', goal: '', startDate: '', endDate: '' })
     setShowCreateForm(false)
@@ -65,7 +65,7 @@ const SprintDetail = () => {
     if (!aiPrompt.trim() || aiLoading) return
     setAiLoading(true)
     try {
-      const { data, error } = await api('POST', '/ai/create-sprint', { prompt: aiPrompt, projectId })
+      const { data, error } = await post('/ai/create-sprint', { prompt: aiPrompt, projectId })
       if (error) {
         alert(error)
         return
@@ -83,7 +83,7 @@ const SprintDetail = () => {
   const handleRetrospective = async (id) => {
     setRetroLoading(true)
     setRetro(null)
-    const { data, error } = await api('GET', '/sprints/sprint/' + id + '/retrospective')
+    const { data, error } = await get('/sprints/sprint/' + id + '/retrospective')
     setRetroLoading(false)
     if (error) return
     setRetro(data)
@@ -101,7 +101,7 @@ const SprintDetail = () => {
 
   const handleUpdate = async (e) => {
     e.preventDefault()
-    const { data } = await api('PUT', '/sprints/sprint/' + editingId, editForm)
+    const { data } = await put('/sprints/sprint/' + editingId, editForm)
     setSprints((prev) => prev.map((s) => (s._id === editingId ? data : s)))
     setEditingId(null)
   }
@@ -117,13 +117,13 @@ const SprintDetail = () => {
 
   const addTasksToSprint = async () => {
     if (!selectedTasks.length) return
-    await api('POST', '/sprints/sprint/' + showAddTasks + '/add-tasks', { taskIds: selectedTasks })
+    await post('/sprints/sprint/' + showAddTasks + '/add-tasks', { taskIds: selectedTasks })
     setShowAddTasks(null)
     setSelectedTasks([])
   }
 
   const removeTaskFromSprint = async (sprintId, taskId) => {
-    await api('POST', '/sprints/sprint/' + sprintId + '/remove-tasks', { taskIds: [taskId] })
+    await post('/sprints/sprint/' + sprintId + '/remove-tasks', { taskIds: [taskId] })
   }
 
   const sprintTasks = (sprintId) => tasks.filter((t) => t.sprintId === sprintId)

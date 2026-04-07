@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'motion/react'
-import { FiGitBranch, FiChevronRight, FiUser, FiCalendar, FiTag } from 'react-icons/fi'
+import { FiGitBranch, FiChevronRight, FiUser, FiCalendar } from 'react-icons/fi'
 import PageHeader from '../components/ui/Header'
-import api from '../utils/api'
-import useAuthStore from '../stores/authStore'
+import { get, patch } from '../utils/http'
 
 const statuses = ['Not Started', 'In Progress', 'Paused', 'Completed']
 
@@ -18,16 +17,14 @@ const statusColors = {
 const Workflow = () => {
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
-  const [dragTask, setDragTask] = useState(null)
   const [saving, setSaving] = useState(false)
   const [projects, setProjects] = useState([])
   const [selectedProject, setSelectedProject] = useState('all')
   const navigate = useNavigate()
-  const { user } = useAuthStore()
 
   useEffect(() => {
     const load = async () => {
-      const { data } = await api('GET', '/overview/assigned-tasks')
+      const { data } = await get('/overview/assigned-tasks')
       const taskList = data.tasks || data || []
       setTasks(Array.isArray(taskList) ? taskList : [])
       const projSet = new Set()
@@ -47,17 +44,12 @@ const Workflow = () => {
   const grouped = {}
   statuses.forEach((s) => { grouped[s] = filtered.filter((t) => t.status === s) })
 
-  const isOwnTask = (task) => {
-    const assignedId = task.assignedTo?._id || task.assignedTo
-    return assignedId === user?._id
-  }
-
   const handleDrop = async (taskId, newStatus) => {
     const task = tasks.find((t) => t._id === taskId)
     if (!task || task.status === newStatus) return
     setSaving(true)
     setTasks((prev) => prev.map((t) => (t._id === taskId ? { ...t, status: newStatus } : t)))
-    const { error } = await api('PATCH', '/projecttasks/tasks/update', { updates: [{ id: taskId, status: newStatus }] })
+    const { error } = await patch('/projecttasks/tasks/update', { updates: [{ id: taskId, status: newStatus }] })
     if (error) setTasks((prev) => prev.map((t) => (t._id === taskId ? { ...t, status: task.status } : t)))
     setSaving(false)
   }

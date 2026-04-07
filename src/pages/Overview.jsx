@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { motion } from 'motion/react'
 import { FiActivity, FiFolder, FiUsers, FiShield, FiCheckCircle, FiClock, FiAlertTriangle, FiBarChart2 } from 'react-icons/fi'
 import PageHeader from '../components/ui/Header'
-import api from '../utils/api'
+import { get } from '../utils/http'
 
 const StatCard = ({ icon: Icon, label, value, color, delay }) => (
   <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }}
@@ -26,8 +26,8 @@ const Overview = () => {
   useEffect(() => {
     const load = async () => {
       const [overviewRes, tasksRes] = await Promise.allSettled([
-        api('GET', '/overview/progress-overview'),
-        api('GET', '/overview/assigned-tasks'),
+        get('/overview/progress-overview'),
+        get('/overview/assigned-tasks'),
       ])
       if (overviewRes.status === 'fulfilled') {
         setStats(overviewRes.value.data.projectCounts || overviewRes.value.data)

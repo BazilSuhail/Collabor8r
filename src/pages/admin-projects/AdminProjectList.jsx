@@ -62,7 +62,6 @@ const AdminProjectList = () => {
   const { adminProjects, fetchAdminProjects } = useProjectStore()
   const [loading, setLoading] = useState(true)
   const [projectColors, setProjectColors] = useState({})
-  const [error, setError] = useState('')
 
   useEffect(() => {
     fetchAdminProjects().finally(() => setLoading(false))
@@ -120,11 +119,6 @@ const AdminProjectList = () => {
 
       <div className="h-[1px] bg-gray-200 dark:bg-[#1a1a1a] w-full mb-6" />
 
-      {error && (
-        <div className="p-4 bg-red-100 dark:bg-red-900/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20 rounded-xl mb-6">
-          {error}
-        </div>
-      )}
 
       {/* Top Quick Overview Stats Banner */}
       {loading ? (

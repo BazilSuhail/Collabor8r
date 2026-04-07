@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { motion } from 'motion/react'
-import { FiFilter, FiPlus, FiTrash2, FiEdit2, FiSave, FiX } from 'react-icons/fi'
+import { FiFilter, FiPlus, FiTrash2, FiEdit2, FiSave } from 'react-icons/fi'
 import ProjectHeader from '../../../components/ui/ProjectHeader'
-import api from '../../../utils/api'
+import { get, put, post, del } from '../../../utils/http'
 
 const SavedFilters = () => {
   const { projectId } = useParams()
@@ -15,7 +15,7 @@ const SavedFilters = () => {
 
   useEffect(() => {
     const load = async () => {
-      const { data } = await api('GET', '/filters/project/' + projectId)
+      const { data } = await get('/filters/project/' + projectId)
       setFilters(data || [])
       setLoading(false)
     }
@@ -29,10 +29,10 @@ const SavedFilters = () => {
     try { query = JSON.parse(form.criteria) } catch { query = { search: form.criteria } }
     try {
       if (editingId) {
-        const { data } = await api('PUT', '/filters/' + editingId, { name: form.name, query, isDefault: form.isDefault })
+        const { data } = await put('/filters/' + editingId, { name: form.name, query, isDefault: form.isDefault })
         setFilters((prev) => prev.map((f) => (f._id === editingId ? data : f)))
       } else {
-        const { data } = await api('POST', '/filters', { name: form.name, projectId, query, isDefault: form.isDefault })
+        const { data } = await post('/filters', { name: form.name, projectId, query, isDefault: form.isDefault })
         setFilters((prev) => [...prev, data])
       }
       setForm({ name: '', criteria: '{}', isDefault: false })
@@ -51,7 +51,7 @@ const SavedFilters = () => {
 
   const handleDelete = async (id) => {
     if (!confirm('Delete this filter?')) return
-    await api('DELETE', '/filters/' + id)
+    await del('/filters/' + id)
     setFilters((prev) => prev.filter((f) => f._id !== id))
   }
 

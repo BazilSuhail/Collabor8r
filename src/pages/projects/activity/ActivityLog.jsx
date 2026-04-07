@@ -4,7 +4,7 @@ import { motion } from 'motion/react'
 import { FiActivity, FiUser, FiCalendar, FiTag, FiClock, FiColumns, FiLink, FiMail, FiZap, FiFilter, FiChevronDown } from 'react-icons/fi'
 import ProjectHeader from '../../../components/ui/ProjectHeader'
 import CustomSelect from '../../../components/ui/CustomSelect'
-import api from '../../../utils/api'
+import { get } from '../../../utils/http'
 
 const actionColors = {
   created: 'bg-green-100 dark:bg-green-900/30 text-green-600',
@@ -50,7 +50,7 @@ const ActivityLog = () => {
       setLoading(true)
       let endpoint = '/activity/project/' + projectId
       if (filter === 'user') endpoint = '/activity/user'
-      const { data } = await api('GET', endpoint)
+      const { data } = await get(endpoint)
       setActivities(data || [])
       setLoading(false)
     }

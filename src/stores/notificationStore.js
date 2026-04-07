@@ -1,6 +1,6 @@
 import { create } from 'zustand'
-import api from '../utils/api'
-import useSocketStore from './socketStore'
+import { put } from '../utils/http'
+import { onNotification } from '../lib/socket'
 
 const useNotificationStore = create((set, get) => ({
   notifications: [],
@@ -13,7 +13,7 @@ const useNotificationStore = create((set, get) => ({
   togglePanel: () => set((s) => ({ panelOpen: !s.panelOpen })),
 
   fetchNotifications: async () => {
-    const { data, error } = await api('GET', '/profile/get-notifications')
+    const { data, error } = await get('/profile/get-notifications')
     if (!error) {
       const notifs = data || []
       set({ notifications: notifs, unreadCount: notifs.filter((n) => !n.read).length })
@@ -22,7 +22,7 @@ const useNotificationStore = create((set, get) => ({
 
   markRead: async (index) => {
     const { notifications } = get()
-    await api('PUT', '/profile/notifications/mark-read', { index })
+    await put('/profile/notifications/mark-read', { index })
     const updated = notifications.map((n, i) => (i === index ? { ...n, read: true } : n))
     set({ notifications: updated, unreadCount: updated.filter((n) => !n.read).length })
   },
@@ -33,14 +33,13 @@ const useNotificationStore = create((set, get) => ({
 
   listenSocket: () => {
     if (get().listening) return
-    const socket = useSocketStore.getState().socket
-    if (!socket) return
-    socket.on('notification', (notification) => {
+    const cleanup = onNotification((notification) => {
       const { notifications } = get()
       const updated = [notification, ...notifications]
       set({ notifications: updated, unreadCount: updated.filter((n) => !n.read).length })
     })
     set({ listening: true })
+    return cleanup
   },
 }))
 

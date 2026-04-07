@@ -6,7 +6,7 @@ import { RiTeamLine } from 'react-icons/ri'
 import { MdOutlineManageAccounts } from 'react-icons/md'
 import { motion } from 'motion/react'
 import PageHeader from '../../components/ui/Header'
-import api from '../../utils/api'
+import { get } from '../../utils/http'
 
 const SkeletonCard = () => (
   <div className="bg-white dark:bg-[#121212] border border-gray-100 dark:border-[#1a1a1a] rounded-2xl overflow-hidden h-[320px] animate-pulse">
@@ -26,7 +26,7 @@ const TasksTimeline = ({ projectId }) => {
   useEffect(() => {
     const fetchTasks = async () => {
       try {
-        const { data } = await api('GET', '/projecttasks/' + projectId)
+        const { data } = await get('/projecttasks/' + projectId)
         setTasks(data.tasks || data || [])
       } catch { /* ignore */ }
     }
@@ -64,7 +64,7 @@ const JoinedProjectList = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data, error } = await api('GET', '/joinedprojects/')
+      const { data, error } = await get('/joinedprojects/')
       if (error) setError(error?.error || 'Failed to load joined projects')
       else setJoinedProjects(data || [])
       setLoading(false)

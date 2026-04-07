@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { motion } from "motion/react";
 import { FiUsers, FiUserPlus, FiMail, FiSearch } from "react-icons/fi";
 import ProjectHeader from "../../../components/ui/ProjectHeader";
-import api from "../../../utils/api";
+import { get, post } from "../../../utils/http";
 
 const TeamManagement = () => {
   const { projectId } = useParams();
@@ -16,8 +16,8 @@ const TeamManagement = () => {
 
   const fetchTeam = async () => {
     const [teamRes, invitesRes] = await Promise.allSettled([
-      api("GET", "/manageusers/" + projectId + "/get-all-users"),
-      api("GET", "/invitations/project/" + projectId),
+      get("/manageusers/" + projectId + "/get-all-users"),
+      get("/invitations/project/" + projectId),
     ]);
     if (teamRes.status === "fulfilled") setTeam(teamRes.value.data || []);
     if (invitesRes.status === "fulfilled")
@@ -31,7 +31,7 @@ const TeamManagement = () => {
 
   const handleSearch = async () => {
     if (!inviteEmail.trim()) return;
-    const { data } = await api("POST", "/admin-projects/get-searched-user", {
+    const { data } = await post("/admin-projects/get-searched-user", {
       email: inviteEmail,
       projectId,
     });
@@ -40,8 +40,7 @@ const TeamManagement = () => {
 
   const handleInvite = async (userId) => {
     setSending(true);
-    const { error } = await api(
-      "POST",
+    const { error } = await post(
       "/admin-projects/send-project-invitation",
       { userId, projectId },
     );
@@ -57,7 +56,7 @@ const TeamManagement = () => {
     e.preventDefault();
     if (!inviteEmail.trim()) return;
     setSending(true);
-    const { error } = await api("POST", "/invitations", {
+    const { error } = await post("/invitations", {
       email: inviteEmail,
       projectId,
     });

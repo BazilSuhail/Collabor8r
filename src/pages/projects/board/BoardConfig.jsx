@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom'
 import { motion } from 'motion/react'
 import { FiColumns, FiPlus, FiTrash2, FiEdit2, FiSave } from 'react-icons/fi'
 import ProjectHeader from '../../../components/ui/ProjectHeader'
-import api from '../../../utils/api'
+import { get, put, post, del } from '../../../utils/http'
 
 const defaultColumns = [
   { name: 'Not Started', statuses: 'Not Started', wipLimit: 0 },
@@ -25,7 +25,7 @@ const BoardConfig = () => {
 
   useEffect(() => {
     const load = async () => {
-      const { data, error } = await api('GET', '/boards/project/' + projectId)
+      const { data, error } = await get('/boards/project/' + projectId)
       if (!error) setBoards(Array.isArray(data) ? data : data?.boards || [])
       setLoading(false)
     }
@@ -66,8 +66,8 @@ const BoardConfig = () => {
       })),
     }
     const { data, error } = editingId
-      ? await api('PUT', '/boards/' + editingId, body)
-      : await api('POST', '/boards', body)
+      ? await put('/boards/' + editingId, body)
+      : await post('/boards', body)
     if (error) { setFormError(error?.message || error?.error || 'Failed to save board.'); return }
     if (editingId) {
       setBoards((prev) => prev.map((b) => (b._id === editingId ? data : b)))
@@ -95,7 +95,7 @@ const BoardConfig = () => {
 
   const handleDelete = async (id) => {
     if (!confirm('Delete this board configuration?')) return
-    const { error } = await api('DELETE', '/boards/' + id)
+    const { error } = await del('/boards/' + id)
     if (error) return
     setBoards((prev) => prev.filter((b) => b._id !== id))
   }

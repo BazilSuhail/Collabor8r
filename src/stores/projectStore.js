@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import api from '../utils/api'
+import { get, post, patch } from '../utils/http'
 
 const useProjectStore = create((set) => ({
   adminProjects: [],
@@ -9,30 +9,30 @@ const useProjectStore = create((set) => ({
   currentProject: null,
 
   fetchAdminProjects: async () => {
-    const { data, error } = await api('GET', '/admin-projects/')
+    const { data, error } = await get('/admin-projects/')
     if (!error) set({ adminProjects: data })
   },
 
   fetchJoinedProjects: async () => {
-    const { data, error } = await api('GET', '/joinedprojects/')
+    const { data, error } = await get('/joinedprojects/')
     if (!error) set({ joinedProjects: data })
   },
 
   fetchManagedProjects: async () => {
-    const { data, error } = await api('GET', '/joinedprojects/as-lead')
+    const { data, error } = await get('/joinedprojects/as-lead')
     if (!error) set({ managedProjects: data, ledProjects: data })
   },
 
   fetchProjectDetail: async (id) => {
-    let result = await api('GET', `/admin-projects/${id}`)
-    if (result.error) result = await api('GET', `/joinedprojects/${id}`)
+    let result = await get('/admin-projects/' + id)
+    if (result.error) result = await get('/joinedprojects/' + id)
     const project = result.data?.project || result.data
     set({ currentProject: project })
     return project
   },
 
   createProject: async (projectData) => {
-    const { data, error } = await api('POST', '/projects/create', projectData)
+    const { data, error } = await post('/projects/create', projectData)
     if (error) throw error
     const project = data.project || data
     set((state) => ({ adminProjects: [...state.adminProjects, project] }))
@@ -40,23 +40,23 @@ const useProjectStore = create((set) => ({
   },
 
   updateProject: async (id, projectData) => {
-    const { data, error } = await api('PUT', `/projects/${id}/update`, projectData)
+    const { data, error } = await patch('/projects/' + id + '/update', projectData)
     if (error) throw error
     set({ currentProject: data })
     return data
   },
 
   respondLeadInvite: async (id, response) => {
-    await api('PUT', `/projects/lead-response/${id}`, { response })
+    await patch('/projects/lead-response/' + id, { response })
   },
 
   fetchProjectTeam: async (id) => {
-    const { data, error } = await api('GET', `/admin-projects/${id}`)
+    const { data, error } = await get('/admin-projects/' + id)
     if (!error) set({ currentProjectTeam: data.team || [] })
   },
 
   addToTeam: async (inviteData) => {
-    const { error } = await api('POST', '/admin-projects/send-project-invitation', inviteData)
+    const { error } = await post('/admin-projects/send-project-invitation', inviteData)
     if (error) throw error
   },
 }))

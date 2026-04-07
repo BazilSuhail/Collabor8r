@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom'
 import { motion } from 'motion/react'
 import { FiTag, FiPlus, FiEdit2, FiTrash2 } from 'react-icons/fi'
 import ProjectHeader from '../../../components/ui/ProjectHeader'
-import api from '../../../utils/api'
+import { get, put, post, del } from '../../../utils/http'
 
 const Labels = () => {
   const { projectId } = useParams()
@@ -15,7 +15,7 @@ const Labels = () => {
 
   useEffect(() => {
     const load = async () => {
-      const { data } = await api('GET', '/labels/project/' + projectId)
+      const { data } = await get('/labels/project/' + projectId)
       setLabels(data || [])
       setLoading(false)
     }
@@ -27,10 +27,10 @@ const Labels = () => {
     if (!form.name.trim()) return
     try {
       if (editingId) {
-        const { data } = await api('PUT', '/labels/' + editingId, { ...form, projectId })
+        const { data } = await put('/labels/' + editingId, { ...form, projectId })
         setLabels((prev) => prev.map((l) => (l._id === editingId ? data : l)))
       } else {
-        const { data } = await api('POST', '/labels', { ...form, projectId })
+        const { data } = await post('/labels', { ...form, projectId })
         setLabels((prev) => [...prev, data])
       }
       setForm({ name: '', color: '#ea580c' })
@@ -50,7 +50,7 @@ const Labels = () => {
   const handleDelete = async (id) => {
     if (!confirm('Delete this label?')) return
     try {
-      await api('DELETE', '/labels/' + id)
+      await del('/labels/' + id)
       setLabels((prev) => prev.filter((l) => l._id !== id))
     } catch (err) { console.error(err) }
   }

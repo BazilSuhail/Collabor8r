@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { motion } from 'motion/react'
-import { FiClock, FiPlus, FiTrash2, FiEdit2, FiSave, FiX } from 'react-icons/fi'
+import { FiClock, FiPlus, FiTrash2, FiEdit2, FiSave } from 'react-icons/fi'
 import ProjectHeader from '../../../components/ui/ProjectHeader'
-import api from '../../../utils/api'
+import { get, put, post, del } from '../../../utils/http'
 
 const TimeTracking = () => {
   const { projectId } = useParams()
@@ -18,8 +18,8 @@ const TimeTracking = () => {
   useEffect(() => {
     const load = async () => {
       const [reportRes, tasksRes] = await Promise.allSettled([
-        api('GET', '/time/report/project/' + projectId),
-        api('GET', '/manageTasks/project/' + projectId),
+        get('/time/report/project/' + projectId),
+        get('/manageTasks/project/' + projectId),
       ])
       if (reportRes.status === 'fulfilled') {
         const d = reportRes.value.data
@@ -37,10 +37,10 @@ const TimeTracking = () => {
     if (!form.taskId || !form.hours) return
     try {
       if (editingId) {
-        const { data } = await api('PUT', '/time/entries/' + editingId, { hours: parseFloat(form.hours), description: form.description, date: form.date })
+        const { data } = await put('/time/entries/' + editingId, { hours: parseFloat(form.hours), description: form.description, date: form.date })
         setEntries((prev) => prev.map((e) => (e._id === editingId ? data : e)))
       } else {
-        const { data } = await api('POST', '/time/entries', { taskId: form.taskId, hours: parseFloat(form.hours), description: form.description, date: form.date })
+        const { data } = await post('/time/entries', { taskId: form.taskId, hours: parseFloat(form.hours), description: form.description, date: form.date })
         const entry = data.entry || data
         setEntries((prev) => [...prev, entry])
       }
@@ -55,7 +55,7 @@ const TimeTracking = () => {
   const handleDelete = async (id) => {
     if (!confirm('Delete this time entry?')) return
     try {
-      await api('DELETE', '/time/entries/' + id)
+      await del('/time/entries/' + id)
       setEntries((prev) => prev.filter((e) => e._id !== id))
     } catch (err) {
       console.error(err)

@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { FiGrid, FiFolder, FiShield, FiPlus, FiBell, FiUser, FiMail } from 'react-icons/fi'
 import PageHeader from '../components/ui/Header'
 import useAuthStore from '../stores/authStore'
-import api from '../utils/api'
+import { get } from '../utils/http'
 
 const Dashboard = () => {
   const { user } = useAuthStore()
@@ -16,8 +16,8 @@ const Dashboard = () => {
     const load = async () => {
       try {
         const [overviewRes, tasksRes] = await Promise.allSettled([
-          api('GET', '/overview/progress-overview'),
-          api('GET', '/overview/assigned-tasks'),
+          get('/overview/progress-overview'),
+          get('/overview/assigned-tasks'),
         ])
         if (overviewRes.status === 'fulfilled') {
           setStats(overviewRes.value.data.projectCounts || overviewRes.value.data)

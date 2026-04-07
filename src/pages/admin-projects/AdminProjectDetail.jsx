@@ -23,7 +23,7 @@ import {
 } from 'react-icons/fi'
 import { GoLink } from 'react-icons/go'
 import { motion } from 'motion/react'
-import api from '../../utils/api'
+import { post } from '../../utils/http'
 import useProjectStore from '../../stores/projectStore'
 
 const navSections = (projectId) => [
@@ -80,7 +80,7 @@ const AdminProjectDetail = () => {
     setUser(null)
     setSuccess('')
     setIsLoading(true)
-    const { data, error } = await api('POST', '/admin-projects/get-searched-user', { email, projectId })
+    const { data, error } = await post('/admin-projects/get-searched-user', { email, projectId })
     if (error) {
       setError(error?.message || error?.error || 'Failed to find the user.')
     } else {
@@ -92,7 +92,7 @@ const AdminProjectDetail = () => {
   const handleAddUser = async () => {
     setError('')
     setSuccess('')
-    const { data, error } = await api('POST', '/admin-projects/send-project-invitation', { userId: user.userId, projectId })
+    const { data, error } = await post('/admin-projects/send-project-invitation', { userId: user.userId, projectId })
     if (error) {
       setError('Failed to add user to project.')
     } else {

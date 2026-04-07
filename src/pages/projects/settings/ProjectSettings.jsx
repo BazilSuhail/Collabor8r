@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom'
 import { motion } from 'motion/react'
 import { FiSave, FiSettings, FiTag, FiTarget, FiLink, FiX, FiPlus } from 'react-icons/fi'
 import ProjectHeader from '../../../components/ui/ProjectHeader'
-import api from '../../../utils/api'
+import { get, put } from '../../../utils/http'
 
 const categories = ['software', 'marketing', 'design', 'research', 'business', 'other']
 const methodologies = ['sprint', 'kanban']
@@ -25,7 +25,7 @@ const ProjectSettings = () => {
 
   useEffect(() => {
     const load = async () => {
-      const { data, error } = await api('GET', '/admin-projects/' + projectId)
+      const { data, error } = await get('/admin-projects/' + projectId)
       if (!error) {
         const p = data?.project || data
         if (p) {
@@ -94,7 +94,7 @@ const ProjectSettings = () => {
       version: form.version,
       links: form.links,
     }
-    const { error } = await api('PUT', `/projects/${projectId}/update`, body)
+    const { error } = await put(`/projects/${projectId}/update`, body)
     if (error) {
       setError(error?.error || 'Failed to save project settings.')
     } else {

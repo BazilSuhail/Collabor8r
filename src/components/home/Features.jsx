@@ -1,19 +1,16 @@
-import React from 'react';
 import { motion } from 'motion/react';
-import { 
-  FiGitBranch, 
-  FiLayers, 
-  FiTerminal, 
-  FiShield, 
-  FiZap, 
-  FiRepeat,
-  FiArrowUpRight 
+import {
+  FiGitBranch,
+  FiTerminal,
+  FiShield,
+  FiZap,
+  FiRepeat
 } from 'react-icons/fi';
 
 export default function Features() {
   return (
     <section className="lg:mt-40 w-full max-w-340 mx-auto p-6 md:p-10 bg-white">
-      
+
       {/* Section Header */}
       <div className="mb-12 max-w-2xl">
         <span className="inline-block px-3 py-1 bg-[#FF4D24]/10 border border-[#FF4D24]/20 rounded-full text-xs font-bold text-[#FF4D24] mb-4">
@@ -29,9 +26,9 @@ export default function Features() {
 
       {/* Features Bento Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        
+
         {/* Feature 1: Git Branching Integrations */}
-        <motion.div 
+        <motion.div
           whileHover={{ y: -6 }}
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
           className="bg-[#F4F4F4] border-2 border-transparent hover:border-[#111111] rounded-[2rem] p-6 md:p-8 flex flex-col justify-between min-h-[240px] md:min-h-[280px] transition-all duration-200"
@@ -48,7 +45,7 @@ export default function Features() {
         </motion.div>
 
         {/* Feature 2: High-Contrast "Fast Action" Center (Highlight Card) */}
-        <motion.div 
+        <motion.div
           whileHover={{ y: -6 }}
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
           className="bg-[#FF4D24] text-white rounded-[2rem] p-6 md:p-8 flex flex-col justify-between min-h-[240px] md:min-h-[280px] relative overflow-hidden"
@@ -74,7 +71,7 @@ export default function Features() {
         </motion.div>
 
         {/* Feature 3: Realtime Engine */}
-        <motion.div 
+        <motion.div
           whileHover={{ y: -6 }}
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
           className="bg-[#F4F4F4] border-2 border-transparent hover:border-[#111111] rounded-[1.5rem] md:rounded-[2rem] p-6 md:p-8 flex flex-col justify-between min-h-[240px] md:min-h-[280px] transition-all duration-200"
@@ -91,7 +88,7 @@ export default function Features() {
         </motion.div>
 
         {/* Feature 4: Custom Automation Pipelines */}
-        <motion.div 
+        <motion.div
           whileHover={{ y: -6 }}
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
           className="bg-[#F4F4F4] border-2 border-transparent hover:border-[#111111] rounded-[1.5rem] md:rounded-[2rem] p-6 md:p-8 flex flex-col justify-between min-h-[240px] md:min-h-[280px] transition-all duration-200 lg:col-span-2"
@@ -114,7 +111,7 @@ export default function Features() {
         </motion.div>
 
         {/* Feature 5: Security / Isolation */}
-        <motion.div 
+        <motion.div
           whileHover={{ y: -6 }}
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
           className="bg-[#0B0B0B] text-white rounded-[1.5rem] md:rounded-[2rem] p-6 md:p-8 flex flex-col justify-between min-h-[240px] md:min-h-[280px] transition-all duration-200"

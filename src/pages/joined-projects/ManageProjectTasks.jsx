@@ -4,7 +4,7 @@ import { GrChapterAdd } from 'react-icons/gr'
 import { FiTrash2, FiEdit3, FiCalendar, FiZap, FiList, FiArrowLeft, FiChevronRight } from 'react-icons/fi'
 import { LuDoorOpen } from 'react-icons/lu'
 import { motion, AnimatePresence } from 'motion/react'
-import api from '../../utils/api'
+import { get, del } from '../../utils/http'
 import useAuthStore from '../../stores/authStore'
 
 const ManageProjectTasks = () => {
@@ -15,21 +15,19 @@ const ManageProjectTasks = () => {
   const [projectName, setProjectName] = useState('')
   const [projectTeam, setProjectTeam] = useState(0)
   const [tasks, setTasks] = useState([])
-  const [users, setUsers] = useState([])
+  const [, setUsers] = useState([])
   const [sprints, setSprints] = useState([])
-  const [labels, setLabels] = useState([])
-  const [role, setRole] = useState('member')
+  const [, setLabels] = useState([])
+  const [, setRole] = useState('member')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
-  const isCreatorOrManager = role === 'creator' || role === 'manager'
-
   const fetchAll = async () => {
     const [tasksRes, usersRes, sprintsRes, labelsRes] = await Promise.allSettled([
-      api('GET', '/manageTasks/project/' + projectId),
-      api('GET', '/manageusers/' + projectId + '/get-all-users'),
-      api('GET', '/sprints/' + projectId),
-      api('GET', '/labels/project/' + projectId),
+      get('/manageTasks/project/' + projectId),
+      get('/manageusers/' + projectId + '/get-all-users'),
+      get('/sprints/' + projectId),
+      get('/labels/project/' + projectId),
     ])
     if (tasksRes.status === 'fulfilled') {
       const d = tasksRes.value.data
@@ -45,10 +43,10 @@ const ManageProjectTasks = () => {
   useEffect(() => {
     const load = async () => {
       await fetchAll()
-      const { data } = await api('GET', '/admin-projects/' + projectId)
+      const { data } = await get('/admin-projects/' + projectId)
       if (!data.error) setRole('creator')
       else {
-        const { data: mgrData } = await api('GET', '/joinedprojects/' + projectId)
+        const { data: mgrData } = await get('/joinedprojects/' + projectId)
         if (mgrData?.project?.manager === user?._id) setRole('manager')
       }
       setLoading(false)
@@ -58,7 +56,7 @@ const ManageProjectTasks = () => {
 
   const handleDeleteTask = async (taskId) => {
     if (!window.confirm('Are you sure you want to delete this task?')) return
-    const { error: err } = await api('DELETE', '/manageTasks/' + taskId)
+    const { error: err } = await del('/manageTasks/' + taskId)
     if (err) { setError('Failed to delete task.'); return }
     setSuccess('Task deleted successfully.')
     setTasks(prev => prev.filter(t => t._id !== taskId))

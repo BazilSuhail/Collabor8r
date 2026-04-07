@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom'
 import { motion } from 'motion/react'
 import { FiZap, FiPlus, FiTrash2, FiEdit2, FiSave, FiPlay } from 'react-icons/fi'
 import ProjectHeader from '../../../components/ui/ProjectHeader'
-import api from '../../../utils/api'
+import { get, put, post, del } from '../../../utils/http'
 
 const eventOptions = ['project.created', 'task.created', 'task.updated', 'task.completed', 'task.deleted', 'sprint.activated', 'sprint.completed', 'comment.added', 'member.added']
 
@@ -17,7 +17,7 @@ const Webhooks = () => {
 
   useEffect(() => {
     const load = async () => {
-      const { data } = await api('GET', '/webhooks/project/' + projectId)
+      const { data } = await get('/webhooks/project/' + projectId)
       setWebhooks(data || [])
       setLoading(false)
     }
@@ -36,10 +36,10 @@ const Webhooks = () => {
     if (!form.url.trim() || !form.events.length) return
     try {
       if (editingId) {
-        const { data } = await api('PUT', '/webhooks/' + editingId, form)
+        const { data } = await put('/webhooks/' + editingId, form)
         setWebhooks((prev) => prev.map((w) => (w._id === editingId ? data : w)))
       } else {
-        const { data } = await api('POST', '/webhooks', { ...form, projectId })
+        const { data } = await post('/webhooks', { ...form, projectId })
         setWebhooks((prev) => [...prev, data])
       }
       setForm({ name: '', url: '', events: [], secret: '' })
@@ -58,13 +58,13 @@ const Webhooks = () => {
 
   const handleDelete = async (id) => {
     if (!confirm('Delete this webhook?')) return
-    await api('DELETE', '/webhooks/' + id)
+    await del('/webhooks/' + id)
     setWebhooks((prev) => prev.filter((w) => w._id !== id))
   }
 
   const handleTest = async (id) => {
     try {
-      const { data } = await api('POST', '/webhooks/' + id + '/test')
+      const { data } = await post('/webhooks/' + id + '/test')
       alert('Test result: ' + (data.statusCode || data.status || 'sent'))
     } catch (err) {
       console.error('Test failed:', err)

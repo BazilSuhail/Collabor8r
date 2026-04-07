@@ -58,9 +58,6 @@ import OrganizationList from "./pages/organizations/OrganizationList";
 import OrganizationDetail from "./pages/organizations/OrganizationDetail";
 import Invitations from "./pages/invitations/Invitations";
 
-// AI Assistant
-import AIAssistant from "./pages/ai/AIAssistant";
-
 // Store
 import useAuthStore from "./stores/authStore";
 
@@ -132,11 +129,6 @@ const App = () => {
           <Route path="/projects/:projectId/webhooks" element={<Webhooks />} />
           <Route path="/projects/:projectId/filters" element={<SavedFilters />} />
           <Route path="/projects/:projectId/dependencies" element={<TaskDependencies />} />
-
-          {/* AI Assistant */}
-          <Route path="/projects/:projectId/ai" element={<AIAssistant />} />
-          <Route path="/ai" element={<AIAssistant />} />
-          <Route path="/ai/project/:projectId" element={<AIAssistant />} />
 
           {/* Tasks */}
           <Route path="/tasks/:taskId" element={<TaskDetail />} />
