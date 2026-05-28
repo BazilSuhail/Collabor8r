@@ -1,558 +1,394 @@
-import { useState, useEffect, useMemo } from 'react'
-import { NavLink, Link, useNavigate, useLocation } from 'react-router-dom'
-import { motion, AnimatePresence } from 'motion/react'
-import { RiLogoutBoxRLine } from 'react-icons/ri'
-import { RxDashboard } from 'react-icons/rx'
-import { MdOutlineFolderShared } from 'react-icons/md'
-import { BsGraphUp } from 'react-icons/bs'
-import { FaCubes } from 'react-icons/fa'
-import { GoPeople } from 'react-icons/go'
-import { LuCopyMinus, LuMailCheck } from 'react-icons/lu'
-import useUiStore from '../../stores/uiStore'
-import useAuthStore from '../../stores/authStore'
-import useProjectStore from '../../stores/projectStore'
-import useNotificationStore from '../../stores/notificationStore'
-import NotificationPanel from '../notifications/NotificationPanel'
+import { Fragment, useLayoutEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { NAV_GROUPS } from "../../metadata/nav.js";
+import { paths } from "../../routes/paths.js";
+import { PROJECT_ROLE_ORDER } from "../../utils/permissions.js";
+import { userAvatarSrc } from "../../utils/media.js";
+import { gsap, prefersReduced, useEntry } from "../../utils/motion.js";
+import { BrandMark, Icon } from "../ui/Icon.jsx";
+import Avatar from "../ui/Avatar.jsx";
+import Dropdown from "../ui/Dropdown.jsx";
+import OrgSwitcher from "./OrgSwitcher.jsx";
+import ProjectSwitcher from "./ProjectSwitcher.jsx";
 
-const colors = [
-  'bg-red-400', 'bg-blue-400', 'bg-green-700', 'bg-yellow-600',
-  'bg-indigo-400', 'bg-orange-400', 'bg-cyan-400', 'bg-violet-400',
-]
+const RAIL_PILL =
+  "z-0 pointer-events-none opacity-0 h-0 absolute top-0 left-[4px] right-[4px] before:content-[''] before:absolute before:inset-0 before:rounded-[12px] before:bg-[var(--side-pill)] before:[box-shadow:inset_0_1px_#ffffff0f] after:content-[''] after:absolute after:top-[10px] after:bottom-[10px] after:left-0 after:w-[3px] after:rounded-[0_3px_3px_0] after:[background:linear-gradient(#ff8a62,var(--ember))] after:[box-shadow:0_0_12px_2px_#e4572e8c]";
+const SHEET_PILL =
+  "z-0 pointer-events-none opacity-0 h-0 absolute top-0 left-0 before:content-[''] before:absolute before:inset-0 before:rounded-[12px] before:[background-color:var(--side-pill)] before:[box-shadow:inset_0_1px_#ffffff0f] after:content-[''] after:absolute after:top-[10px] after:bottom-[10px] after:left-0 after:w-[3px] after:rounded-[0_3px_3px_0] after:[background:linear-gradient(#ff8a62,var(--ember))] after:[box-shadow:0_0_12px_2px_#e4572e8c]";
 
-const getRandomColor = () => colors[Math.floor(Math.random() * colors.length)]
+const rank = (role) => PROJECT_ROLE_ORDER.indexOf(role);
+const allowed = (item, role) =>
+  !item.requires || (role && rank(role) >= rank(item.requires));
+const capitalise = (text) =>
+  text ? text.charAt(0).toUpperCase() + text.slice(1) : "";
 
-const projectNavs = ['/projects', '/projects/joined', '/projects/managing']
-
-const isNavMatch = (to, pathname) => {
-  if (to === '/projects') return pathname === '/projects' || /^\/projects\/[a-f0-9]+$/.test(pathname)
-  if (to === '/projects/joined') return pathname === '/projects/joined' || pathname.endsWith('/joined')
-  if (to === '/projects/managing') return pathname === '/projects/managing' || pathname.endsWith('/manage')
-  return pathname === to
+// Secondary line under a nav label. Only uses data the sidebar already receives (badge counts and project role).
+function detailFor(id, badge, role) {
+  if (id === "my-work" && badge) return `${badge} assigned to you`;
+  if (id === "overview" && role) return `Your role: ${capitalise(role)}`;
+  return null;
 }
 
-const mainNavItems = [
-  { to: '/dashboard', label: 'Dashboard', icon: <RxDashboard size={19} /> },
-  { to: '/overview', label: 'Overview', icon: <MdOutlineFolderShared size={19} /> },
-  { to: '/workflow', label: 'Workflow', icon: <BsGraphUp size={19} /> },
-]
+// Main, project and settings links. Project items show only with a project. Role gating hides entries.
+export function SideNav({
+  pathname,
+  pid,
+  role,
+  badges = {},
+  mini = false,
+  sheet = false,
+  onNavigate,
+}) {
+  const navRef = useRef(null);
+  const pillRef = useRef(null);
 
-const projectNavItems = [
-  { to: '/projects', label: 'My Projects', icon: <FaCubes size={19} /> },
-  { to: '/projects/joined', label: 'Joined Projects', icon: <LuCopyMinus size={19} /> },
-  { to: '/projects/managing', label: 'Managed Projects', icon: <GoPeople size={19} /> },
-]
+  const groups = NAV_GROUPS.filter((g) => !g.project || pid)
+    .map((g) => ({
+      ...g,
+      items: g.items
+        .filter((item) => allowed(item, role))
+        .map((item) => ({ ...item, href: item.to(pid) })),
+    }))
+    .filter((g) => g.items.length > 0);
 
-const Sidebar = () => {
-  const navigate = useNavigate()
-  const { user, logout } = useAuthStore()
-  const { fetchJoinedProjects, joinedProjects: rawJoined } = useProjectStore()
-  const joinedProjects = useMemo(() => rawJoined.filter((p, i, arr) => arr.findIndex((x) => x._id === p._id) === i), [rawJoined])
-  const { sidebarOpen, toggleSidebar, theme, toggleTheme } = useUiStore()
-  const [projectColors, setProjectColors] = useState({})
-  const location = useLocation()
-  const [isMobileSheetOpen, setIsMobileSheetOpen] = useState(false)
-  const [barVisible, setBarVisible] = useState(true)
-  const { unreadCount, togglePanel: toggleNotificationPanel, fetchNotifications, listenSocket } = useNotificationStore()
-
-  useEffect(() => {
-    fetchJoinedProjects()
-    fetchNotifications()
-    listenSocket()
-  }, [])
-
-  useEffect(() => {
-    const colorMapping = {}
-    joinedProjects.forEach((project) => {
-      colorMapping[project._id] = getRandomColor()
-    })
-    setProjectColors(colorMapping)
-  }, [joinedProjects])
-
-  useEffect(() => {
-    let lastY = window.scrollY
-    const onScroll = () => {
-      const y = window.scrollY
-      const delta = y - lastY
-      if (delta > 8) {
-        setBarVisible(false)
-        setIsMobileSheetOpen(false)
-      } else if (delta < -4) {
-        setBarVisible(true)
+  // The active link is the one with the longest matching href, so /p/x overview does not win on /p/x/issues.
+  let activeId = null;
+  let best = -1;
+  groups.forEach((g) =>
+    g.items.forEach((item) => {
+      const hit =
+        pathname === item.href || pathname.startsWith(`${item.href}/`);
+      if (hit && item.href.length > best) {
+        best = item.href.length;
+        activeId = item.id;
       }
-      lastY = y
-    }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
+    }),
+  );
 
-  const handleProjectClick = (projectId) => {
-    navigate(`/projects/${projectId}`)
-  }
+  useEntry(
+    navRef,
+    ({ gsap: g, reduced }) => {
+      const move = () => {
+        const link = navRef.current?.querySelector('.nav[aria-current="page"]');
+        const pill = pillRef.current;
+        if (!link || !pill) return;
+        const to = sheet
+          ? {
+              x: link.offsetLeft,
+              y: link.offsetTop,
+              width: link.offsetWidth,
+              height: link.offsetHeight,
+              opacity: 1,
+            }
+          : { y: link.offsetTop, height: link.offsetHeight, opacity: 1 };
+        g.to(pill, { ...to, duration: reduced ? 0 : 0.5, ease: "power3.out" });
+      };
+      move();
+      addEventListener("resize", move);
+      return () => removeEventListener("resize", move);
+    },
+    [activeId, mini, sheet, pid],
+  );
 
-  const handleLogout = () => {
-    logout()
-    navigate('/login')
-  }
-
-  const quickPaths = ['/dashboard', '/overview', '/workflow']
-  const showQuickLinks = quickPaths.includes(location.pathname)
-
-  const sidebarVariants = {
-    expanded: { width: 260 },
-    collapsed: { width: 80 },
-  }
-
-  const renderNavLink = (item) => {
-    const end = projectNavs.includes(item.to)
-    const active = isNavMatch(item.to, location.pathname)
-    return (
-      <NavLink
-        key={item.to}
-        to={item.to}
-        end={end}
-        className={`flex items-center p-2.5 rounded-xl transition-all duration-200 group ${
-          active
-            ? 'bg-orange-500/10 text-orange-600 dark:text-orange-400 font-semibold'
-            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-white font-medium'
-        } ${!sidebarOpen && 'justify-center'}`}
-      >
-        <span className="min-w-[20px] flex items-center justify-center">{item.icon}</span>
-        {sidebarOpen && <p className="ml-3 text-[14px] truncate">{item.label}</p>}
-      </NavLink>
-    )
-  }
+  const navClass = sheet
+    ? "side__nav grid grid-cols-2 content-start gap-x-3 gap-y-1 flex-auto min-h-0 mx-[-4px] py-0 px-[4px] relative overflow-x-hidden overflow-y-auto [scrollbar-width:none]"
+    : "side__nav flex flex-col flex-auto gap-[2px] min-h-0 mx-[-4px] py-0 px-[4px] relative overflow-x-hidden overflow-y-auto [scrollbar-width:none]";
+  const groupClass = sheet
+    ? "side__group col-span-2 uppercase tracking-[0.08em] text-side-muted whitespace-nowrap pt-[14px] px-[12px] pb-[6px] text-[11px] font-bold first-of-type:pt-[4px]"
+    : "side__group uppercase tracking-[0.08em] text-side-muted whitespace-nowrap pt-[14px] px-[12px] pb-[6px] text-[11px] font-bold first-of-type:pt-[4px] [@media(height<=900px)_and_(width>=901px)]:pt-[10px] [@media(height<=900px)_and_(width>=901px)]:pb-[4px]";
 
   return (
-    <nav className="relative">
-      {/* mobile top navbar */}
-      <motion.div
-        className="lg:hidden fixed top-0 left-0 right-0 bg-white dark:bg-[#0d0d0d] border-b border-gray-200 dark:border-gray-800/50 z-50 h-16 flex items-center justify-between px-4"
-        initial={{ y: -64 }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <Link to="/" className="flex items-center gap-2">
-          <img src="/collabor8r.svg" alt="logo" className="w-7 h-7" />
-          <div className="text-[16px] font-black text-gray-900 dark:text-gray-100 tracking-tight">
-            Collabor<span className="text-orange-600">8</span>r
-          </div>
-        </Link>
-
-        <div className="flex items-center gap-3">
-          <button
-            onClick={toggleNotificationPanel}
-            className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors relative"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-            </svg>
-            {unreadCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-lg">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
-            )}
-          </button>
-
-          <button
-            onClick={toggleTheme}
-            className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-          >
-            {theme === 'dark' ? (
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-              </svg>
-            ) : (
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-              </svg>
-            )}
-          </button>
-        </div>
-      </motion.div>
-
-      {/* floating bottom bar (mobile/tablet) */}
-      <motion.div
-        className="lg:hidden fixed left-2 right-2 z-40 flex items-center justify-between"
-        style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 2rem)' }}
-        animate={{ y: barVisible && !isMobileSheetOpen ? 0 : 120 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      >
-        {showQuickLinks && (
-          <div className="flex items-center bg-white dark:bg-[#0d0d0d] rounded-2xl border border-gray-200 dark:border-gray-800/50 shadow-lg backdrop-blur-sm p-1.5 gap-1">
-            {mainNavItems.map((item) => {
-              const active = isNavMatch(item.to, location.pathname)
-              return (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all duration-200 min-w-[64px] ${
-                    active
-                      ? 'bg-orange-600/10 text-orange-600'
-                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                  }`}
-                >
-                  {item.icon}
-                  <span className="text-[10px] font-semibold">{item.label}</span>
-                </NavLink>
-              )
-            })}
-          </div>
-        )}
-
-        <button
-          onClick={() => setIsMobileSheetOpen(!isMobileSheetOpen)}
-          className="ml-auto p-3 bg-white dark:bg-[#0d0d0d] rounded-2xl border border-gray-200 dark:border-gray-800/50 shadow-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-          aria-label="open menu"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <line x1="3" y1="12" x2="21" y2="12" />
-            <line x1="3" y1="18" x2="21" y2="18" />
-          </svg>
-        </button>
-      </motion.div>
-
-      {/* mobile bottom sheet */}
-      <AnimatePresence>
-        {isMobileSheetOpen && (
-          <>
-            <motion.div
-              className="lg:hidden fixed inset-0 bg-black/50 z-50"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsMobileSheetOpen(false)}
-            />
-            <motion.div
-              className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-[#0d0d0d] rounded-t-3xl border-t border-gray-200 dark:border-gray-800/50 max-h-[80vh] overflow-y-auto"
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', stiffness: 300, damping: 32 }}
-            >
-              <div className="flex justify-center pt-3 pb-1">
-                <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-gray-700" />
-              </div>
-
-              <div className="flex items-center gap-3 px-5 py-3">
-                <Link to="/profile" onClick={() => setIsMobileSheetOpen(false)} className="flex items-center flex-1">
-                  <img
-                    src={`/avatars/${user?.avatar || '1'}.jpg`}
-                    alt="profile"
-                    className="w-10 h-10 rounded-full object-cover"
-                    onError={(e) => {
-                      e.target.style.display = 'none'
-                      const fb = e.target.nextSibling
-                      if (fb) fb.style.display = 'flex'
-                    }}
-                  />
-                  <div className="hidden w-10 h-10 rounded-full bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-500/20 dark:to-orange-600/20 items-center justify-center text-orange-600 dark:text-orange-400 text-sm font-bold">
-                    {user?.name?.charAt(0)}
-                  </div>
-                  <div className="flex-1 ml-3">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{user?.name}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
-                  </div>
-                </Link>
-              </div>
-
-              <div className="px-3 pb-6 space-y-4">
-                <div>
-                  <p className="px-3 pb-2 text-[11px] font-bold text-gray-400 dark:text-gray-500 tracking-wider">
-                    Main
-                  </p>
-                  {mainNavItems.map(renderNavLink)}
-                </div>
-
-                <div>
-                  <p className="px-3 pb-2 text-[11px] font-bold text-gray-400 dark:text-gray-500 tracking-wider">
-                    Projects
-                  </p>
-                  {projectNavItems.map(renderNavLink)}
-                </div>
-
-                <div>
-                  <p className="px-3 pb-2 text-[11px] font-bold text-gray-400 dark:text-gray-500 tracking-wider">
-                    Account
-                  </p>
-                  <NavLink
-                    to="/invitations"
-                    onClick={() => setIsMobileSheetOpen(false)}
-                    className={({ isActive }) =>
-                      `flex items-center p-2.5 rounded-xl transition-all ${
-                        isActive ? 'bg-orange-600/10 text-orange-600 font-semibold' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/50'
-                      }`
-                    }
-                  >
-                    <LuMailCheck size={19} />
-                    <span className="ml-3 text-sm font-medium">Invitations</span>
-                  </NavLink>
-                </div>
-
-                <div className="pt-2 border-t border-gray-200 dark:border-gray-800/50 space-y-1">
-                  <button
-                    onClick={toggleTheme}
-                    className="w-full flex items-center p-2.5 rounded-xl transition-all text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/50"
-                  >
-                    {theme === 'dark' ? (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
-                      </svg>
-                    ) : (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                      </svg>
-                    )}
-                    <span className="ml-3 font-medium text-sm">
-                      {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-                    </span>
-                  </button>
-
-                  <button
-                    onClick={handleLogout}
-                    className="w-full flex items-center p-2.5 rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all"
-                  >
-                    <RiLogoutBoxRLine size={20} />
-                    <span className="ml-3 font-medium text-sm">Sign Out</span>
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
-      {/* desktop sidebar */}
-      <motion.div
-        initial={sidebarOpen ? 'expanded' : 'collapsed'}
-        animate={sidebarOpen ? 'expanded' : 'collapsed'}
-        variants={sidebarVariants}
-        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="hidden bg-[#fcfcfc] dark:bg-[#0d0d0d] fixed left-0 top-0 lg:flex flex-col border-r border-gray-200 dark:border-gray-800/50 h-screen transition-colors duration-300 z-40"
-      >
-        {/* floating edge toggle button */}
-        <button
-          onClick={toggleSidebar}
-          className="absolute right-0 top-5 w-8 h-8 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full flex items-center justify-center text-gray-400 hover:text-orange-600 transition-all shadow-md z-50 translate-x-1/2"
-        >
-          <motion.div animate={{ rotate: sidebarOpen ? 0 : 180 }} className="flex items-center justify-center">
-            <svg width="16" height="16" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M7.5 9L4.5 6L7.5 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </motion.div>
-        </button>
-
-        <div className="flex flex-col h-full p-4 overflow-hidden">
-          {/* header & logo */}
-          <div className="flex items-center justify-between mb-5 px-1">
-            <Link to="/" className="flex items-center gap-2.5">
-              <img src="/collabor8r.svg" alt="logo" className="w-8 h-8 min-w-[32px]" />
-              <AnimatePresence>
-                {sidebarOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -10 }}
-                    className="text-[19px] font-black text-gray-900 dark:text-gray-100 tracking-tight"
-                  >
-                    Collabor<span className="text-orange-600">8</span>r
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </Link>
-          </div>
-
-          {/* cool pill dark mode row with notifications */}
-          <div className={`flex items-center justify-between gap-1 mb-4 ${!sidebarOpen && 'hidden'}`}>
-            <motion.button
-              onClick={toggleTheme}
-              whileTap={{ scale: 0.95 }}
-              className="group relative flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-gray-100 to-gray-200/80 dark:from-gray-800/80 dark:to-gray-900 border border-gray-200/80 dark:border-gray-700/50 hover:border-orange-500/40 dark:hover:border-orange-500/40 shadow-sm transition-all duration-300"
-              title="toggle theme"
-            >
-              <AnimatePresence mode="wait">
-                {theme === 'dark' ? (
-                  <motion.div
-                    key="sun"
-                    initial={{ scale: 0, rotate: -90 }}
-                    animate={{ scale: 1, rotate: 0 }}
-                    exit={{ scale: 0, rotate: 90 }}
-                    transition={{ duration: 0.2 }}
-                    className="text-amber-500 dark:text-amber-400 flex items-center"
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-                    </svg>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="moon"
-                    initial={{ scale: 0, rotate: -90 }}
-                    animate={{ scale: 1, rotate: 0 }}
-                    exit={{ scale: 0, rotate: 90 }}
-                    transition={{ duration: 0.2 }}
-                    className="text-indigo-600 dark:text-indigo-400 flex items-center"
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                    </svg>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-              {theme === 'dark' ? (
-                <span className="text-[12px] font-semibold text-amber-600 dark:text-amber-300 tracking-wide">Light Mode</span>
-              ) : (
-                <span className="text-[12px] font-semibold text-slate-600 dark:text-slate-300 tracking-wide">Dark Mode</span>
-              )}
-            </motion.button>
-
-            <div className="flex items-center gap-1">
-              <motion.button
-                onClick={toggleNotificationPanel}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="p-1.5 rounded-full text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200/50 dark:hover:bg-gray-800/60 transition-colors relative"
+    <nav className={navClass} aria-label="Main" ref={navRef}>
+      <span
+        className={sheet ? SHEET_PILL : RAIL_PILL}
+        aria-hidden="true"
+        ref={pillRef}
+      />
+      {groups.map((g) => (
+        <Fragment key={g.id}>
+          <p className={groupClass}>
+            <span className="side__label">{g.label}</span>
+          </p>
+          {g.items.map((item) => {
+            const active = item.id === activeId;
+            const badge = badges[item.id];
+            const detail = detailFor(item.id, badge, role);
+            return (
+              <a
+                key={item.id}
+                className={`nav relative z-[1] flex flex-none items-center gap-[12px] ${detail ? "min-h-[42px] py-[6px]" : "h-[42px] py-0"} px-[12px] rounded-[12px] whitespace-nowrap text-[14px] font-semibold text-side-muted [&:hover]:text-side-text aria-[current=page]:text-side-text aria-[current=page]:[&_.ico]:text-[#ff8a62] [@media(pointer:coarse)]:min-h-[44px] [@media(pointer:coarse)]:[&:active]:[transform:scale(0.97)] focus-visible:outline-side-text`}
+                href={item.href}
+                data-route={item.id}
+                data-tip={item.label}
+                aria-current={active ? "page" : undefined}
+                onClick={onNavigate}
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                </svg>
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center shadow-lg">
-                    {unreadCount > 9 ? '9+' : unreadCount}
+                <Icon name={item.icon} />
+                {detail ? (
+                  <span className="side__label flex min-w-0 flex-1 flex-col">
+                    <span className="truncate">{item.label}</span>
+                    <small className="truncate text-[11.5px] font-medium text-side-muted">
+                      {detail}
+                    </small>
                   </span>
+                ) : (
+                  <span className="side__label">{item.label}</span>
                 )}
-              </motion.button>
-            </div>
-          </div>
-
-          {/* user profile card */}
-          <Link to="/profile" className="mb-5">
-            <div className={`flex items-center p-2 rounded-xl bg-gray-100 dark:bg-gray-800/40 hover:bg-gray-200/60 dark:hover:bg-gray-800/70 border border-gray-200/50 dark:border-gray-800/50 transition-all ${!sidebarOpen ? 'justify-center' : 'px-3'}`}>
-              <div className={`flex items-center w-full gap-2.5 overflow-hidden ${!sidebarOpen && 'justify-center'}`}>
-                <img
-                  src={`/avatars/${user?.avatar || '1'}.jpg`}
-                  alt="profile"
-                  className="w-8 h-8 rounded-full object-cover ring-2 ring-orange-500/20 shrink-0"
-                  onError={(e) => {
-                    e.target.style.display = 'none'
-                    const fb = e.target.nextSibling
-                    if (fb) fb.style.display = 'flex'
-                  }}
-                />
-                <div className="hidden w-8 h-8 rounded-full bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-500/20 dark:to-orange-600/20 items-center justify-center text-orange-600 dark:text-orange-400 text-xs font-bold shrink-0">
-                  {user?.name?.charAt(0)}
-                </div>
-                {sidebarOpen && (
-                  <div className="flex-1 overflow-hidden">
-                    <p className="text-xs font-bold text-gray-900 dark:text-gray-100 truncate">{user?.name}</p>
-                    <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium truncate">{user?.email}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </Link>
-
-          {/* categorized navigation list */}
-          <div className="flex-1 overflow-y-auto pr-1 -mr-1 no-scrollbar space-y-4">
-            {/* section 1: main overview */}
-            <div>
-              {sidebarOpen && (
-                <p className="px-3 pb-1.5 text-[10px] font-bold text-gray-400 dark:text-gray-500 tracking-wider">
-                  Main
-                </p>
-              )}
-              <div className="space-y-1">
-                {mainNavItems.map(renderNavLink)}
-              </div>
-            </div>
-
-            {/* section 2: projects management */}
-            <div>
-              {sidebarOpen && (
-                <p className="px-3 pb-1.5 text-[10px] font-bold text-gray-400 dark:text-gray-500 tracking-wider">
-                  Projects
-                </p>
-              )}
-              <div className="space-y-1">
-                {projectNavItems.map(renderNavLink)}
-              </div>
-            </div>
-
-            {/* flat joined projects list */}
-            {sidebarOpen && joinedProjects.length > 0 && (
-              <div className="pt-2">
-                <p className="px-3 pb-1 text-[10px] font-bold text-gray-400 dark:text-gray-500 tracking-wider">
-                  Recent Projects
-                </p>
-                <div className="space-y-0.5">
-                  {joinedProjects.map((project) => (
-                    <div
-                      key={project._id}
-                      onClick={() => handleProjectClick(project._id)}
-                      className="flex items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 cursor-pointer group transition-all"
-                    >
-                      <div
-                        className={`w-4 h-4 text-[9px] flex items-center justify-center text-white font-bold rounded ${
-                          projectColors[project._id] || 'bg-gray-400'
-                        } flex-shrink-0`}
-                      >
-                        {project.name?.charAt(0)}
-                      </div>
-                      <p className="ml-2.5 text-[13px] font-medium text-gray-600 dark:text-gray-400 group-hover:text-orange-600 dark:group-hover:text-orange-400 truncate">
-                        {project.name}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* section 3: account & communications */}
-            <div>
-              {sidebarOpen && (
-                <p className="px-3 pb-1.5 text-[10px] font-bold text-gray-400 dark:text-gray-500 tracking-wider">
-                  Account
-                </p>
-              )}
-              <div className="space-y-1">
-                <NavLink
-                  to="/invitations"
-                  className={({ isActive }) =>
-                    `flex items-center p-2.5 rounded-xl transition-all duration-200 group ${
-                      isActive
-                        ? 'bg-orange-500/10 text-orange-600 dark:text-orange-400 font-semibold'
-                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-white font-medium'
-                    } ${!sidebarOpen && 'justify-center'}`
-                  }
-                >
-                  <span className="min-w-[20px] flex items-center justify-center">
-                    <LuMailCheck size={19} />
+                {badge ? (
+                  <span
+                    className="nav__badge inline-grid min-w-[22px] h-[20px] py-0 px-[7px] text-side-text bg-[#ffffff1a] rounded-[999px] place-items-center ml-auto text-[11px] font-bold"
+                    data-badge={item.id}
+                  >
+                    {badge}
                   </span>
-                  {sidebarOpen && <p className="ml-3 text-[14px]">Invitations</p>}
-                </NavLink>
-              </div>
-            </div>
-          </div>
-
-          {/* footer / logout */}
-          <div className="mt-auto pt-3 border-t border-gray-200 dark:border-gray-800/50">
-            <button
-              onClick={handleLogout}
-              className={`flex items-center w-full p-2.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl transition-all ${
-                !sidebarOpen && 'justify-center'
-              }`}
-            >
-              <RiLogoutBoxRLine size={18} className="shrink-0" />
-              {sidebarOpen && <span className="ml-3 font-semibold text-[14px]">Logout</span>}
-            </button>
-          </div>
-        </div>
-      </motion.div>
-
-      <NotificationPanel />
+                ) : null}
+              </a>
+            );
+          })}
+        </Fragment>
+      ))}
     </nav>
-  )
+  );
 }
 
-export default Sidebar
+// Monthly goal card: first open goal of the current project. Hidden when there is none.
+export function SideGoal({ goal, pid, onNavigate }) {
+  if (!goal || !pid) return null;
+  const target = Number(goal.target) || 0;
+  const current = Number(goal.current) || 0;
+  const pct =
+    target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
+  const unit = goal.unit ? ` ${goal.unit}` : "";
+  return (
+    <a
+      className="side__goal [display:grid] flex-none gap-[8px] p-[14px] rounded-[15px] border border-[var(--side-line)] bg-[linear-gradient(135deg,#e4572e38,#5b52d629)] focus-visible:outline-side-text [&_small]:text-side-muted [&_small]:text-[11.5px]"
+      href={paths.goals(pid)}
+      aria-label={`Goal: ${goal.title ?? "Project goal"}`}
+      onClick={onNavigate}
+    >
+      <span className="side__goal-top side__label flex justify-between text-side-muted text-[12.5px] font-semibold [&_b]:text-side-text [&_b]:tabular-nums">
+        <span>Goal</span>
+        <b>{pct}%</b>
+      </span>
+      <span className="meter meter--side side__label [&_.meter\_\_fill]:bg-[linear-gradient(90deg,var(--ember),#ffb08f)]">
+        <span
+          className="meter__fill"
+          style={{ transform: `scale(${pct / 100}, 1)` }}
+        />
+      </span>
+      <small className="side__label truncate">
+        {goal.title ?? "Goal"}: {current} of {target}
+        {unit}
+      </small>
+    </a>
+  );
+}
+
+// Account button: profile, settings, theme and sign out.
+export function AccountMenu({ user, theme, onSignOut, onNavigate }) {
+  const navigate = useNavigate();
+  const dark = theme?.resolved === "dark";
+  const items = [
+    {
+      id: "profile",
+      label: "Profile",
+      icon: "user",
+      onSelect: () => {
+        onNavigate?.();
+        navigate(paths.settingsProfile());
+      },
+    },
+    {
+      id: "settings",
+      label: "Settings",
+      icon: "settings",
+      onSelect: () => {
+        onNavigate?.();
+        navigate(paths.settings());
+      },
+    },
+    {
+      id: "theme",
+      label: dark ? "Switch to light theme" : "Switch to dark theme",
+      icon: "moon",
+      onSelect: () => theme?.toggle(),
+    },
+    "separator",
+    {
+      id: "signout",
+      label: "Sign out",
+      icon: "logout",
+      danger: true,
+      onSelect: () => onSignOut?.(),
+    },
+  ];
+  return (
+    <Dropdown
+      label="Account menu"
+      items={items}
+      trigger={(p) => (
+        <button
+          type="button"
+          ref={p.ref}
+          id={p.id}
+          onClick={p.onClick}
+          onKeyDown={p.onKeyDown}
+          aria-haspopup={p["aria-haspopup"]}
+          aria-expanded={p["aria-expanded"]}
+          aria-controls={p["aria-controls"]}
+          aria-label="Account menu"
+          className="side__me flex flex-none items-center gap-[10px] p-[8px] rounded-[14px] text-left [&:hover]:bg-[#ffffff0f] aria-[expanded=true]:bg-[#ffffff0f] focus-visible:outline-side-text"
+        >
+          <Avatar
+            name={user?.displayName ?? user?.email ?? "Me"}
+            src={userAvatarSrc(user)}
+            size="md"
+          />
+          <span className="side__label side__who flex-1 min-w-0">
+            <b className="block overflow-hidden whitespace-nowrap text-ellipsis text-[13.5px] text-side-text">
+              {user?.displayName ?? "Signed in"}
+            </b>
+            <small className="block whitespace-nowrap text-side-muted text-[12px] overflow-hidden text-ellipsis">
+              {user?.jobTitle ?? ""}
+            </small>
+          </span>
+          <Icon
+            name="upDown"
+            cls="side__label w-[16px] h-[16px] text-side-muted"
+          />
+        </button>
+      )}
+    />
+  );
+}
+
+export default function Sidebar({
+  pathname,
+  pid,
+  project,
+  orgId,
+  personal,
+  role,
+  badges,
+  mini,
+  onToggle,
+  openSearch,
+  user,
+  goal,
+  theme,
+  onSignOut,
+}) {
+  const asideRef = useRef(null);
+  const miniRef = useRef(mini);
+
+  useLayoutEffect(() => {
+    const prev = miniRef.current;
+    miniRef.current = mini;
+    const side = asideRef.current;
+    const app = side?.parentElement;
+    if (!side || !app || prev === mini) return;
+    const to = parseFloat(
+      getComputedStyle(app).getPropertyValue(mini ? "--side-mini" : "--side-w"),
+    );
+    const clear = () => {
+      app.style.gridTemplateColumns = "";
+      app.style.background = "";
+      side.style.willChange = "";
+    };
+    if (
+      prefersReduced() ||
+      !matchMedia("(min-width: 901px)").matches ||
+      !(to >= 0)
+    ) {
+      clear();
+      return;
+    }
+    const state = { w: side.getBoundingClientRect().width };
+    const paint = () => {
+      app.style.gridTemplateColumns = `${state.w}px minmax(0,1fr)`;
+      app.style.background = `linear-gradient(90deg, var(--side-bg) ${state.w}px, transparent 0)`;
+    };
+    paint();
+    side.style.willChange = "width";
+    const tl = gsap.timeline({ onComplete: clear });
+    tl.to(
+      state,
+      { w: to, duration: 0.5, ease: "power3.inOut", onUpdate: paint },
+      0,
+    );
+    return () => {
+      tl.kill();
+      clear();
+    };
+  }, [mini]);
+
+  return (
+    <aside
+      className="side z-40 flex h-[100dvh] flex-col gap-[14px] sticky top-0 overflow-hidden bg-side-bg text-side-text pt-[18px] px-[14px] pb-[14px] w900:z-[50] w900:invisible w900:w-[min(300px,86vw)] w900:h-[100dvh] w900:pt-[max(18px,env(safe-area-inset-top))] w900:pb-[max(14px,env(safe-area-inset-bottom))] w900:fixed w900:top-0 w900:bottom-0 w900:left-0 w900:shadow-[30px_0_60px_-20px_#00000080] [@media(height<=900px)_and_(width>=901px)]:gap-[10px] [@media(height<=900px)_and_(width>=901px)]:pt-[14px]"
+      id="side"
+      aria-label="Sidebar"
+      ref={asideRef}
+    >
+      <div
+        className={`side__top flex items-center justify-between gap-[8px] min-h-[44px] pt-0 ${mini ? "pr-[2px]" : "pr-[40px]"} pb-0 pl-[6px]`}
+      >
+        <a
+          className="brand inline-flex items-center gap-[11px] min-w-0"
+          href={paths.dashboard()}
+          aria-label="Collabor8r, dashboard"
+        >
+          <span
+            className="brand__mark [display:grid] place-items-center flex-none w-[30px] h-[30px] rounded-[12px] bg-transparent text-[color:var(--on-ember)] shadow-[var(--shadow)] overflow-hidden p-0"
+            aria-hidden="true"
+          >
+            <BrandMark className="w-full h-full object-contain" />
+          </span>
+          <span className="brand__name [font:700_19px/1_var(--display)] tracking-[-0.02em] whitespace-nowrap">
+            Collabor<span className="text-orange-500">8</span>r
+          </span>
+        </a>
+      </div>
+
+      <button
+        type="button"
+        className="side__search flex flex-none items-center gap-[10px] h-[42px] py-0 px-[12px] text-left rounded-[12px] border border-[var(--side-line)] bg-[color:var(--side-pill)] text-side-muted [&:hover]:text-side-text focus-visible:outline-side-text"
+        data-act="search"
+        aria-label="Search (Ctrl+K)"
+        onClick={openSearch}
+      >
+        <Icon name="search" />
+        <span className="side__label flex-1">Search</span>
+        <kbd className="side__label [font:600_11px_var(--font)] text-side-muted border border-[var(--side-line)] [background:0_0] rounded-[6px] py-[2px] px-[6px]">
+          Ctrl K
+        </kbd>
+      </button>
+
+      <div className="grid gap-[8px] flex-none">
+        <OrgSwitcher personal={personal} />
+        <ProjectSwitcher project={project} orgId={orgId} personal={personal} />
+      </div>
+
+      <SideNav
+        pathname={pathname}
+        pid={pid}
+        role={role}
+        badges={badges}
+        mini={mini}
+      />
+
+      <SideGoal goal={goal} pid={pid} />
+
+      <AccountMenu user={user} theme={theme} onSignOut={onSignOut} />
+      <button
+        type="button"
+        className="side__collapse absolute top-[12px] right-[10px] z-[3] [display:grid] place-items-center w-[26px] h-[26px] rounded-[50%] border border-[color:var(--line)] bg-[color:var(--surface)] text-[color:var(--ink)] shadow-[var(--shadow)] dark:bg-[color:var(--side-pill)] dark:border-[color:var(--side-line)] dark:text-[color:var(--side-text)] [&:hover]:bg-[color:var(--surface-2)] dark:[&:hover]:bg-[color:var(--side-bg)] focus-visible:outline-ember [&_.ico]:w-[14px] [&_.ico]:h-[14px] [@media(pointer:coarse)]:w-[44px] [@media(pointer:coarse)]:h-[44px] w900:hidden"
+        aria-label={mini ? "Expand sidebar" : "Collapse sidebar"}
+        aria-expanded={!mini}
+        aria-controls="side"
+        onClick={onToggle}
+      >
+        <Icon name="chevL" />
+      </button>
+    </aside>
+  );
+}

@@ -1,0 +1,106 @@
+@layer legacy {
+    [data-view="calendar"]
+        :is(
+            .cal-ev,
+            .cal-blk,
+            .cal-dot,
+            .cal-bar,
+            .cal-kind,
+            .cal-key,
+            .cal-next
+        ) {
+        --k: var(--faint);
+        --k-soft: var(--well);
+        --k-t: var(--muted);
+    }
+    [data-view="calendar"]
+        :is(
+            .cal-ev--ember,
+            .cal-blk--ember,
+            .cal-dot--ember,
+            .cal-bar--ember,
+            .cal-kind--ember,
+            .cal-key--ember,
+            .cal-next--ember
+        ) {
+        --k: var(--ember);
+        --k-soft: var(--ember-soft);
+        --k-t: var(--ember-t);
+    }
+    [data-view="calendar"]
+        :is(
+            .cal-ev--iris,
+            .cal-blk--iris,
+            .cal-dot--iris,
+            .cal-bar--iris,
+            .cal-kind--iris,
+            .cal-key--iris,
+            .cal-next--iris
+        ) {
+        --k: var(--iris);
+        --k-soft: var(--iris-soft);
+        --k-t: var(--iris-t);
+    }
+    [data-view="calendar"]
+        :is(
+            .cal-ev--spruce,
+            .cal-blk--spruce,
+            .cal-dot--spruce,
+            .cal-bar--spruce,
+            .cal-kind--spruce,
+            .cal-key--spruce,
+            .cal-next--spruce
+        ) {
+        --k: var(--spruce);
+        --k-soft: var(--spruce-soft);
+        --k-t: var(--spruce-t);
+    }
+    [data-view="calendar"]
+        :is(
+            .cal-ev--saffron,
+            .cal-blk--saffron,
+            .cal-dot--saffron,
+            .cal-bar--saffron,
+            .cal-kind--saffron,
+            .cal-key--saffron,
+            .cal-next--saffron
+        ) {
+        --k: var(--saffron);
+        --k-soft: var(--saffron-soft);
+        --k-t: var(--saffron-t);
+    }
+    [data-view="calendar"] .cal-ev:hover {
+        filter: brightness(0.97);
+    }
+    :root[data-theme="dark"]
+        [data-view="calendar"]
+        .cal-ev:hover {
+        filter: brightness(1.15);
+    }
+    [data-view="calendar"].cal-dragging,
+    [data-view="calendar"].cal-dragging * {
+        cursor: grabbing !important;
+        -webkit-user-select: none !important;
+        user-select: none !important;
+    }
+    [data-view="calendar"] .cal-mini__d.has-ev:after {
+        content: "";
+        background: var(--iris);
+        border-radius: 50%;
+        width: 4px;
+        height: 4px;
+        margin: 0 auto;
+        position: absolute;
+        bottom: 4px;
+        left: 0;
+        right: 0;
+    }
+    [data-view="calendar"] .cal-mini__d.is-sel:after {
+        background: var(--on-ink);
+    }
+    @media (width<=760px) {
+        [data-view="calendar"] .cal-legend::-webkit-scrollbar {
+            display: none;
+        }
+    }
+}

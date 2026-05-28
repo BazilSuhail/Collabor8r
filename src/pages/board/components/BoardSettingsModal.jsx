@@ -1,0 +1,204 @@
+// feat(pages/board/components/BoardSettingsModal): edit a board's name, its columns, the statuses each column holds and its quick options.
+import { useEffect, useState } from "react";
+import Button from "../../../components/ui/Button.jsx";
+import Input from "../../../components/ui/Input.jsx";
+import { Icon } from "../../../components/ui/Icon.jsx";
+import Select from "../../../components/ui/Select.jsx";
+import SideModal from "../../../components/ui/SideModal.jsx";
+import Switch from "../../../components/ui/Switch.jsx";
+import { useToast } from "../../../context/ToastContext.jsx";
+import { updateBoard } from "../../../libs/api/boards.js";
+
+const MAX_COLUMNS = 15;
+
+const toDraft = (board) => ({
+  name: board?.name ?? "",
+  showSubtasks: Boolean(board?.showSubtasks),
+  showDoneColumn: board?.showDoneColumn !== false,
+  columns: (board?.columns ?? []).map((c) => ({
+    id: c.id,
+    name: c.name,
+    statusIds: (c.statusIds ?? []).map(String),
+    wipLimit: c.wipLimit ?? null,
+  })),
+});
+
+// Saved from the board's own settings. Boards have no version field, so the save sends none.
+export default function BoardSettingsModal({ open, onClose, projectId, board, statuses, onSaved }) {
+  const toast = useToast();
+  const [draft, setDraft] = useState(() => toDraft(board));
+  const [saving, setSaving] = useState(false);
+
+  // The draft is taken when the modal opens and then kept, so a background refresh never overwrites edits.
+  useEffect(() => {
+    if (open) setDraft(toDraft(board));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  const statusOptions = statuses.map((s) => ({ value: String(s.id), label: s.name }));
+
+  const patchColumn = (index, changes) =>
+    setDraft((d) => ({ ...d, columns: d.columns.map((c, i) => (i === index ? { ...c, ...changes } : c)) }));
+
+  const moveColumn = (index, delta) =>
+    setDraft((d) => {
+      const target = index + delta;
+      if (target < 0 || target >= d.columns.length) return d;
+      const columns = [...d.columns];
+      [columns[index], columns[target]] = [columns[target], columns[index]];
+      return { ...d, columns };
+    });
+
+  const removeColumn = (index) =>
+    setDraft((d) => ({ ...d, columns: d.columns.filter((_, i) => i !== index) }));
+
+  const addColumn = () =>
+    setDraft((d) => ({
+      ...d,
+      columns: [...d.columns, { id: undefined, name: `Column ${d.columns.length + 1}`, statusIds: [], wipLimit: null }],
+    }));
+
+  const save = async () => {
+    if (!draft.name.trim() || draft.columns.length === 0) return;
+    setSaving(true);
+    try {
+      await updateBoard(projectId, String(board.id), {
+        name: draft.name.trim(),
+        showSubtasks: draft.showSubtasks,
+        showDoneColumn: draft.showDoneColumn,
+        columns: draft.columns.map((c, i) => ({
+          ...(c.id ? { id: String(c.id) } : {}),
+          name: c.name.trim() || `Column ${i + 1}`,
+          statusIds: c.statusIds,
+          wipLimit: c.wipLimit ? Number(c.wipLimit) : null,
+          sortOrder: i,
+        })),
+      });
+      toast.success("Board saved");
+      onSaved?.();
+      onClose();
+    } catch (err) {
+      toast.error(err.errors?.[0]?.message ?? err.message ?? "Could not save the board");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <SideModal
+      open={open}
+      onClose={onClose}
+      title="Board settings"
+      subtitle="Columns hold statuses. An issue in a status appears in the column that holds it."
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            variant="ember"
+            loading={saving}
+            disabled={saving || !draft.name.trim() || draft.columns.length === 0}
+            onClick={save}
+          >
+            Save board
+          </Button>
+        </>
+      }
+    >
+      <div className="grid gap-[16px]">
+        <Input
+          label="Board name"
+          hint="Up to 100 characters."
+          value={draft.name}
+          maxLength={100}
+          required
+          onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
+        />
+
+        <div className="grid gap-[10px]">
+          <h3 className="flex items-center gap-[8px] text-[14px] font-bold m-0">
+            <Icon name="kanban" cls="shrink-0" />
+            Columns
+          </h3>
+          {draft.columns.map((col, index) => (
+            <div key={col.id ?? `new-${index}`} className="grid gap-[10px] rounded-card border border-line bg-surface p-[12px]">
+              <div className="flex items-end gap-[8px]">
+                <div className="flex-1 min-w-0">
+                  <Input
+                    label={`Column ${index + 1} name`}
+                    hint="Blank names are saved as Column N."
+                    value={col.name}
+                    maxLength={60}
+                    onChange={(e) => patchColumn(index, { name: e.target.value })}
+                  />
+                </div>
+                <Input
+                  label="WIP limit"
+                  type="number"
+                  min="0"
+                  hint="Empty for none."
+                  className="w-[110px]"
+                  value={col.wipLimit ?? ""}
+                  onChange={(e) => patchColumn(index, { wipLimit: e.target.value === "" ? null : Number(e.target.value) })}
+                />
+              </div>
+              <Select
+                multiple
+                label={`Statuses in ${col.name || `column ${index + 1}`}`}
+                placeholder="No statuses"
+                hint={statusOptions.length ? "An issue in one of these statuses appears in this column." : "This project has no statuses yet."}
+                value={col.statusIds}
+                options={statusOptions}
+                onChange={(statusIds) => patchColumn(index, { statusIds })}
+              />
+              <div className="flex justify-end gap-[6px]">
+                <Button variant="ghost" size="sm" iconOnly icon="up" aria-label={`Move column ${index + 1} up`} disabled={index === 0} onClick={() => moveColumn(index, -1)} />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  iconOnly
+                  icon="down"
+                  aria-label={`Move column ${index + 1} down`}
+                  disabled={index === draft.columns.length - 1}
+                  onClick={() => moveColumn(index, 1)}
+                />
+                <Button
+                  variant="danger"
+                  size="sm"
+                  iconOnly
+                  icon="trash"
+                  aria-label={`Remove column ${index + 1}`}
+                  disabled={draft.columns.length <= 1}
+                  onClick={() => removeColumn(index)}
+                />
+              </div>
+            </div>
+          ))}
+          <div>
+            <Button variant="soft" size="sm" icon="plus" disabled={draft.columns.length >= MAX_COLUMNS} onClick={addColumn}>
+              Add column
+            </Button>
+          </div>
+        </div>
+
+        <div className="grid gap-[12px]">
+          <h3 className="flex items-center gap-[8px] text-[14px] font-bold m-0">
+            <Icon name="settings" cls="shrink-0" />
+            Quick options
+          </h3>
+          <Switch
+            label="Show subtasks as cards"
+            checked={draft.showSubtasks}
+            onChange={(showSubtasks) => setDraft((d) => ({ ...d, showSubtasks }))}
+          />
+          <Switch
+            label="Show the done column"
+            checked={draft.showDoneColumn}
+            onChange={(showDoneColumn) => setDraft((d) => ({ ...d, showDoneColumn }))}
+          />
+        </div>
+      </div>
+    </SideModal>
+  );
+}
