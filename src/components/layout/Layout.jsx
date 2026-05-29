@@ -84,12 +84,15 @@ const readRememberedProject = () => {
 };
 
 // Same rules as ProjectContext.resolveRole, using the member list loaded here.
-const projectRoleFor = (project, members, userId, orgRole) => {
+const projectRoleFor = (project, members, userId, orgRole, membersDenied = false) => {
   if (!project || !userId) return null;
+  const served = project.myAccess?.role;
+  if (served && PROJECT_ROLE_ORDER.includes(served)) return served;
   const membership = members.find((m) => m.userId === userId);
   if (membership) return PROJECT_ROLE_ORDER.includes(membership.role) ? membership.role : "guest";
   if (!project.orgId) return project.ownerId === userId ? "admin" : null;
   if (orgRole === "owner" || orgRole === "admin") return "admin";
+  if (membersDenied) return "guest";
   if (project.visibility === "open" && ORG_ROLE_ORDER.indexOf(orgRole) >= ORG_ROLE_ORDER.indexOf("member")) {
     return "viewer";
   }
@@ -144,11 +147,17 @@ function ShellBody() {
   const activePid = project ? pid : null;
 
   const membersRes = useResource(
-    () => (activePid && user?.id ? fetchAllMembers(activePid) : Promise.resolve(NONE)),
+    () => (activePid && user?.id && !project?.myAccess ? fetchAllMembers(activePid) : Promise.resolve(NONE)),
     [activePid, user?.id],
   );
   const orgRole = project?.orgId ? (orgs.find((o) => o.id === project.orgId)?.role ?? null) : null;
-  const role = activePid ? projectRoleFor(project, membersRes.data ?? [], user?.id ?? null, orgRole) : null;
+  const role = activePid ? projectRoleFor(
+        project,
+        membersRes.data ?? [],
+        user?.id ?? null,
+        orgRole,
+        membersRes.status === "error" && membersRes.error?.status === 403,
+      ) : null;
 
   const goalsRes = useResource(
     () => (activePid ? listGoals(activePid, { limit: 5 }) : Promise.resolve(NONE)),

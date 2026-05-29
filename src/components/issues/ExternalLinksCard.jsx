@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useProject } from "../../context/ProjectContext.jsx";
 import { useToast } from "../../context/ToastContext.jsx";
 import {
   createExternalLink,
@@ -31,9 +32,12 @@ const safeHref = (url) => (typeof url === "string" && /^https?:\/\//i.test(url) 
 // integration access pass can={false} and see the empty state instead.
 export default function ExternalLinksCard({ projectId, issueId, can = false }) {
   const toast = useToast();
+  const { can: canProject } = useProject();
+  // The integrations list is admin only on the server; others would only get a 403 toast.
+  const canList = can && canProject("integration.manage");
   const [adding, setAdding] = useState(false);
   const linked = useResource(async () => {
-    if (!can) return { data: { links: [], integrations: [] } };
+    if (!canList) return { data: { links: [], integrations: [] } };
     const res = await listIntegrations(projectId);
     const integrations = res.data ?? [];
     const lists = await Promise.all(
@@ -43,11 +47,11 @@ export default function ExternalLinksCard({ projectId, issueId, can = false }) {
       (r.data ?? []).map((l) => ({
         ...l,
         integrationId: idOf(integrations[index]),
-        provider: integrations[index].name ?? integrations[index].provider ?? "Integration",
+        provider: integrations[index].displayName ?? integrations[index].name ?? integrations[index].provider ?? "Integration",
       })),
     );
     return { data: { links, integrations } };
-  }, [projectId, issueId, can]);
+  }, [projectId, issueId, canList]);
 
   const links = linked.data?.links ?? [];
   const integrations = linked.data?.integrations ?? [];
@@ -142,7 +146,7 @@ export default function ExternalLinksCard({ projectId, issueId, can = false }) {
                 label="Integration"
                 value={values.integrationId}
                 onChange={(next) => set("integrationId", next)}
-                options={integrations.map((i) => ({ value: idOf(i), label: i.name ?? i.provider ?? "Integration" }))}
+                options={integrations.map((i) => ({ value: idOf(i), label: i.displayName ?? i.name ?? i.provider ?? "Integration" }))}
                 error={errors.integrationId}
                 hint={integrations.length ? "Only connected integrations are listed." : undefined}
                 required

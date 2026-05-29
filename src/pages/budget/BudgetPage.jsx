@@ -20,7 +20,13 @@ import ActualModal from "./components/ActualModal.jsx";
 import BudgetLineModal from "./components/BudgetLineModal.jsx";
 
 const withIds = (res) => ({ ...res, data: res.data.map((r) => ({ ...r, id: r.id ?? r._id })) });
-const fetchActuals = ({ pid, budgetLineId, ...p }) => listActuals(pid, { budgetLineId, ...p }).then(withIds);
+// The server filters by budgetLineId; the client check keeps the drawer right against a server that still ignores it.
+const fetchActuals = ({ pid, budgetLineId, ...p }) =>
+  listActuals(pid, { budgetLineId, ...p })
+    .then(withIds)
+    .then((res) =>
+      budgetLineId ? { ...res, data: res.data.filter((r) => String(r.budgetLineId?._id ?? r.budgetLineId) === String(budgetLineId)) } : res,
+    );
 
 // Share of planned spent so far: spruce under 85 percent, saffron to 100, ember over budget.
 const meterTone = (pct) => (pct > 100 ? "" : pct >= 85 ? "meter__fill--saffron" : "meter__fill--spruce");
@@ -67,6 +73,7 @@ export default function BudgetPage() {
   const { projectId, can } = useProject();
   const toast = useToast();
   const canEdit = can("budget.edit");
+  const canDelete = can("budget.delete");
   const summary = useResource(() => budgetSummary(projectId), [projectId]);
   const [lineModal, setLineModal] = useState({ open: false, target: null });
   const [actualOpen, setActualOpen] = useState(false);
@@ -150,8 +157,7 @@ export default function BudgetPage() {
     ? (row) => [
         { id: "actual", label: "Record actual", icon: "dollar", onSelect: () => { setActualLine(row.lineId); setActualOpen(true); } },
         { id: "edit", label: "Edit line", icon: "edit", onSelect: () => setLineModal({ open: true, target: row }) },
-        "separator",
-        { id: "delete", label: "Delete line", icon: "trash", danger: true, onSelect: () => setDeleting(row) },
+        ...(canDelete ? ["separator", { id: "delete", label: "Delete line", icon: "trash", danger: true, onSelect: () => setDeleting(row) }] : []),
       ]
     : undefined;
 

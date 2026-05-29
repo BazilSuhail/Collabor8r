@@ -136,13 +136,25 @@ function AssignedList({ onOpen, onLog }) {
       statusName: issue.statusName,
       statusCategory: issue.statusCategory,
     };
+    let res;
     try {
-      await transitionIssue(issue.projectId, idOf(issue), { toStatus: "done" });
+      res = await transitionIssue(issue.projectId, idOf(issue), { toStatus: "done" });
     } catch {
       toast.error(`Could not move ${issue.key}`);
       return;
     }
-    patch(idOf(issue), { statusId: "done", statusName: "Done", statusCategory: "done" });
+    // Use the issue the server returns; fall back to the category only when the body is empty.
+    const updated = res?.data;
+    patch(
+      idOf(issue),
+      updated?.statusId
+        ? {
+            statusId: updated.statusId,
+            statusName: updated.statusName ?? "Done",
+            statusCategory: updated.statusCategory ?? "done",
+          }
+        : { statusName: "Done", statusCategory: "done" },
+    );
     toast.success(`${issue.key} marked done`, { undo: () => undo(issue, before) });
   };
 

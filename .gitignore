@@ -3,3 +3,8 @@ dist/
 dist-cal/
 .vite/
 *.log
+
+# environment files (keep the example)
+.env
+.env.*
+!.env.example

@@ -11,7 +11,7 @@ const ProjectContext = createContext(null);
 const MEMBER_PAGE_LIMIT = 100;
 const MEMBER_MAX_PAGES = 10;
 const EMPTY = [];
-const EMPTY_DETAIL = { statuses: EMPTY, types: EMPTY, priorities: EMPTY, resolutions: EMPTY, labels: EMPTY, members: EMPTY };
+const EMPTY_DETAIL = { membersDenied: false, statuses: EMPTY, types: EMPTY, priorities: EMPTY, resolutions: EMPTY, labels: EMPTY, members: EMPTY };
 
 // Loads every member page (capped), so the caller can be found for their role.
 const fetchMembers = async (projectId) => {
@@ -50,17 +50,23 @@ const loadDetail = async (projectId) => {
     resolutions: rowsOf(resolutions),
     labels: rowsOf(labels),
     members: members.status === 'fulfilled' ? members.value : EMPTY,
+    // A guest cannot read the member list (403). That is how the caller is told apart from "unknown".
+    membersDenied: members.status === 'rejected' && members.reason?.status === 403,
   };
 };
 
 // Personal projects have no members: the owner is admin. Org owners and admins are admin.
 // Open projects give org members viewer. A custom role id cannot be mapped client side, so it reads as guest.
-const resolveRole = ({ project, members, userId, orgRole }) => {
+const resolveRole = ({ project, members, userId, orgRole, membersDenied = false }) => {
   if (!project || !userId) return null;
+  // The server's own answer wins when it sends one (covers custom roles).
+  const served = project.myAccess?.role;
+  if (served && PROJECT_ROLE_ORDER.includes(served)) return served;
   const membership = members.find((m) => m.userId === userId);
   if (membership) return PROJECT_ROLE_ORDER.includes(membership.role) ? membership.role : 'guest';
   if (!project.orgId) return project.ownerId === userId ? 'admin' : null;
   if (orgRole === 'owner' || orgRole === 'admin') return 'admin';
+  if (membersDenied) return 'guest';
   if (project.visibility === 'open' && ORG_ROLE_ORDER.indexOf(orgRole) >= ORG_ROLE_ORDER.indexOf('member')) {
     return 'viewer';
   }
@@ -88,7 +94,13 @@ export function ProjectProvider({ projectId, children }) {
     [orgs, project],
   );
   const role = useMemo(
-    () => resolveRole({ project, members: detail.members, userId: user?.id ?? null, orgRole }),
+    () => resolveRole({
+        project,
+        members: detail.members,
+        userId: user?.id ?? null,
+        orgRole,
+        membersDenied: detail.membersDenied,
+      }),
     [project, detail.members, user, orgRole],
   );
 

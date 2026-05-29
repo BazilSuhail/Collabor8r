@@ -27,6 +27,7 @@ export default function RisksPage() {
   const { projectId, can, members } = useProject();
   const toast = useToast();
   const canEdit = can("risk.edit");
+  const canDelete = can("risk.delete");
   const risks = usePaged(fetchRisks, { pid: projectId });
   const [selected, setSelected] = useState(null);
   const [form, setForm] = useState({ open: false, target: null });
@@ -116,8 +117,7 @@ export default function RisksPage() {
   const rowMenu = canEdit
     ? (row) => [
         { id: "edit", label: "Edit", icon: "edit", onSelect: () => setForm({ open: true, target: row }) },
-        "separator",
-        { id: "delete", label: "Delete", icon: "trash", danger: true, onSelect: () => setDeleting(row) },
+        ...(canDelete ? ["separator", { id: "delete", label: "Delete", icon: "trash", danger: true, onSelect: () => setDeleting(row) }] : []),
       ]
     : undefined;
 

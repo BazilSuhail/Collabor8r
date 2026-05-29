@@ -61,7 +61,7 @@ function Toolbar({ label, query, onQuery, filterLabel, filterValue, onFilter, fi
   );
 }
 
-function SegmentsView({ projectId, canEdit }) {
+function SegmentsView({ projectId, canEdit, canDelete }) {
   const toast = useToast();
   const [query, setQuery] = useState("");
   const q = useDebounced(query.trim());
@@ -95,8 +95,7 @@ function SegmentsView({ projectId, canEdit }) {
   const rowMenu = canEdit
     ? (row) => [
         { id: "edit", label: "Edit", icon: "edit", onSelect: () => setModal({ open: true, target: row }) },
-        "separator",
-        { id: "delete", label: "Delete", icon: "trash", danger: true, onSelect: () => setDeleting(row) },
+        ...(canDelete ? ["separator", { id: "delete", label: "Delete", icon: "trash", danger: true, onSelect: () => setDeleting(row) }] : []),
       ]
     : undefined;
 
@@ -164,7 +163,7 @@ function SegmentsView({ projectId, canEdit }) {
   );
 }
 
-function GlossaryView({ projectId, canEdit }) {
+function GlossaryView({ projectId, canEdit, canDelete }) {
   const toast = useToast();
   const [query, setQuery] = useState("");
   const q = useDebounced(query.trim());
@@ -197,8 +196,7 @@ function GlossaryView({ projectId, canEdit }) {
   const rowMenu = canEdit
     ? (row) => [
         { id: "edit", label: "Edit", icon: "edit", onSelect: () => setModal({ open: true, target: row }) },
-        "separator",
-        { id: "delete", label: "Delete", icon: "trash", danger: true, onSelect: () => setDeleting(row) },
+        ...(canDelete ? ["separator", { id: "delete", label: "Delete", icon: "trash", danger: true, onSelect: () => setDeleting(row) }] : []),
       ]
     : undefined;
 
@@ -271,6 +269,7 @@ function GlossaryView({ projectId, canEdit }) {
 export default function CatPage() {
   const { projectId, can } = useProject();
   const canEdit = can("cat.edit");
+  const canDelete = can("cat.delete");
   const [tab, setTab] = useState("segments");
 
   useViewEntry(
@@ -299,9 +298,9 @@ export default function CatPage() {
         />
       </div>
       {tab === "segments" ? (
-        <SegmentsView projectId={projectId} canEdit={canEdit} />
+        <SegmentsView projectId={projectId} canEdit={canEdit} canDelete={canDelete} />
       ) : (
-        <GlossaryView projectId={projectId} canEdit={canEdit} />
+        <GlossaryView projectId={projectId} canEdit={canEdit} canDelete={canDelete} />
       )}
     </>
   );

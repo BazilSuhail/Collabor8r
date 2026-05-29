@@ -24,7 +24,7 @@ const fetchRuns = ({ pid, ...p }) => listTestRuns(pid, p).then(withIds);
 const RUN_TONE = { planned: "plain", inProgress: "iris", completed: "spruce" };
 const RUN_LABEL = { planned: "Planned", inProgress: "In progress", completed: "Completed" };
 
-function CasesTable({ projectId, canEdit, onNew, onEdit, onDelete }) {
+function CasesTable({ projectId, canEdit, canDelete, onNew, onEdit, onDelete }) {
   const cases = usePaged(fetchCases, { pid: projectId });
   const columns = [
     {
@@ -52,8 +52,7 @@ function CasesTable({ projectId, canEdit, onNew, onEdit, onDelete }) {
   const rowMenu = canEdit
     ? (row) => [
         { id: "edit", label: "Edit", icon: "edit", onSelect: () => onEdit(row) },
-        "separator",
-        { id: "delete", label: "Delete", icon: "trash", danger: true, onSelect: () => onDelete(row) },
+        ...(canDelete ? ["separator", { id: "delete", label: "Delete", icon: "trash", danger: true, onSelect: () => onDelete(row) }] : []),
       ]
     : undefined;
   return (
@@ -141,6 +140,7 @@ export default function TestCasesPage() {
   const toast = useToast();
   const navigate = useNavigate();
   const canEdit = can("test.edit");
+  const canDelete = can("test.delete");
   const [tab, setTab] = useState("cases");
   const [version, setVersion] = useState(0);
   const [caseModal, setCaseModal] = useState({ open: false, target: null });
@@ -205,6 +205,7 @@ export default function TestCasesPage() {
           key={`cases-${version}`}
           projectId={projectId}
           canEdit={canEdit}
+          canDelete={canDelete}
           onNew={() => setCaseModal({ open: true, target: null })}
           onEdit={(row) => setCaseModal({ open: true, target: row })}
           onDelete={(row) => setDeleting(row)}

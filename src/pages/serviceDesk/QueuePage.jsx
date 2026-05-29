@@ -46,8 +46,11 @@ export default function QueuePage() {
 
   const typesQ = useResource(() => listRequestTypes(projectId, { limit: 100 }), [projectId]);
   const timersQ = useResource(() => listSlaTimers(projectId, { limit: 100 }), [projectId]);
+  // The server filters issues by issue type, not request type: send the type the request type creates.
+  const selectedRT = typeId === "all" ? null : (typesQ.data ?? []).find((t) => String(t.id ?? t._id) === typeId);
+  const selectedIssueTypeId = selectedRT?.issueTypeId ? String(selectedRT.issueTypeId) : undefined;
   const issuesQ = usePaged((q) => listIssues(projectId, q), {
-  requestType: typeId === "all" ? undefined : typeId,
+  type: selectedIssueTypeId,
   status: statusCat === "all" ? undefined : statusCat,
   });
 

@@ -84,7 +84,11 @@ export default function DraftPreview({ open, onClose, draft, onAccepted, onDisca
   const status = draft?.status;
 
   const accept = useMutation(() => acceptDraft(draftId, {}), {
-    success: (res) => (res?.data?.created?.key ? `Created ${res.data.created.key}` : "Draft accepted"),
+    success: (res) => {
+      const c = res?.data?.created;
+      const keys = (Array.isArray(c) ? c : c ? [c] : []).map((k) => (typeof k === "string" ? k : k?.key)).filter(Boolean);
+      return keys.length ? `Created ${keys.join(", ")}` : "Draft accepted";
+    },
     error: (err) => err.message || "Could not accept this draft",
   });
   const discard = useMutation(
